@@ -24,4 +24,7 @@ if [[ ${1:-} == --verify-demo ]]; then
   shift
   exec .venv/bin/python -m benchmarks.smoke_http --standalone "$@"
 fi
+if [[ ${1:-} == --build-cloudflare ]]; then
+  exec .venv/bin/python -m cloudflare.build_demo
+fi
 exec .venv/bin/python app.py "$@"

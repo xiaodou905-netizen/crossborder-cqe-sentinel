@@ -1,10 +1,12 @@
 # Crossborder CQE Sentinel
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Cloudflare-F38020?logo=cloudflare&logoColor=white)](https://crossborder-cqe-sentinel.xtony.workers.dev/)
+
 **面向智能硬件、IoT 与智能制造的 CQE / SQE / DQE 质量参考架构。**
 
 从海外客诉追到出货批次，再用现场检验判断是否具备复验条件。工作台用可回查的同步快照串起渠道评价、出货追溯和 QMS 检验，附历史 8D 与 Listing 星级情景。
 
-[本地运行与验收](#本地运行与验收) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
+[公网体验（无需 API Key）](https://crossborder-cqe-sentinel.xtony.workers.dev/) · [本地运行与验收](#本地运行与验收) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
 
 | 已在本地运行的证据 | 结果 |
 | --- | --- |
@@ -98,14 +100,18 @@ flowchart LR
 
 ## 在线演示部署
 
-仓库提供默认公开演示配置的 Dockerfile。公开模式运行合成 HTTP 来源并复用成功快照，CSV 导入、研判写入和故障回放留在本地模式。
+[打开 Cloudflare Live Demo](https://crossborder-cqe-sentinel.xtony.workers.dev/)。默认开启无密钥的合成演示，支持三源同步、503 故障回放、批次证据与 8D 查看、调查与复验、飞书卡片预览、内置 CSV 导入和模拟追加。真实评价与企业接口在本机工作台接入。
+
+部署构建由 Python 引擎生成合成回放结果。Cloudflare Worker 在运行时逐页核验三源指纹，再发布对应快照。每个访客的操作由 SQLite Durable Object 分开保存，演示会话有效期为 12 小时。部署使用 Workers Free 支持的组件。[Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/) · [Durable Objects 免费层](https://developers.cloudflare.com/durable-objects/platform/pricing/)
+
+在仓库根目录用已登录的 Wrangler 发布。部署命令会调用 `./start.sh --build-cloudflare` 生成静态资源与回放快照。
 
 ```bash
-docker build -t crossborder-cqe-sentinel .
-docker run --rm -p 127.0.0.1:8001:8001 crossborder-cqe-sentinel
+npx --yes wrangler@4.165.0 deploy --config wrangler.jsonc
+.venv/bin/python -m benchmarks.smoke_cloudflare --base https://crossborder-cqe-sentinel.xtony.workers.dev
 ```
 
-将仓库发布后，在 Render 新建 **Docker Web Service** 并连接此仓库，使用根目录 Dockerfile，Health Check Path 填 `/healthz`。应用监听平台提供的 `PORT`。部署成功后打开平台分配的 URL 并点击 **同步三源**。 [Render Web Services](https://render.com/docs/web-services) · [Health Checks](https://render.com/docs/health-checks)
+公网接口文档可从 [Cloudflare 演示 API](https://crossborder-cqe-sentinel.xtony.workers.dev/docs) 打开。
 
 ## 代码入口
 

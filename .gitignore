@@ -8,3 +8,7 @@ __pycache__/
 *.log
 .DS_Store
 .sentinel/
+.wrangler/
+/cloudflare/.build-*/
+/cloudflare/dist/
+/cloudflare/generated.json

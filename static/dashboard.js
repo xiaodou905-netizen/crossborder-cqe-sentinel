@@ -48,7 +48,7 @@ function reviewQuote(row) {
 
 async function fetchJSON(path, options) {
   const response = await fetch(path, {cache: "no-store", ...options}).catch(() => {
-    throw new Error("无法连接本地分析服务。");
+    throw new Error("无法连接分析服务。");
   });
   if (!response.ok) {
     const error = await response.json().catch(() => null);
@@ -329,15 +329,17 @@ function renderDashboard(report) {
   const period = report.sample_start ? `${report.sample_start} 至 ${report.as_of}` : `截至 ${report.as_of}`;
   $("#sample-period").textContent = `样本期间  ${period}  ·  ${report.total_reviews} 条差评`;
   const imported = report.data_source === "import";
-  const modeLabel = report.demo_mode ? "本地规则" : "兼容 API";
+  const modeLabel = workbenchConfig.interactive_sandbox ? "合成回放" : (report.demo_mode ? "本地规则" : "兼容 API");
   let dataLabel = imported ? `CSV 导入 · ${modeLabel}` : "合成数据 · " + (report.demo_mode ? "无密钥演示" : modeLabel);
   if (report.simulated_reviews) dataLabel = `合成数据 · 已追加 ${report.simulated_reviews} 条模拟差评`;
   if (report.sync) dataLabel = (report.sync.profile === "synthetic_http" ? "合成三源同步" : "已配置三源同步") + ` · ${modeLabel}`;
   $("#mode-label").textContent = dataLabel;
   $("#restore-import").hidden = imported || !report.has_import;
-  $("#import-mode").textContent = report.demo_mode
-    ? "当前使用本地规则进行分析。"
-    : "当前使用兼容 API，有正文的低星评价及其编号会传给已配置的模型服务。";
+  $("#import-mode").textContent = workbenchConfig.interactive_sandbox
+    ? "内置样例包含全星级评价。可切换星级覆盖范围，查看导入后的归类、排行与星级。"
+    : (report.demo_mode
+        ? "当前使用本地规则进行分析。"
+        : "当前使用兼容 API，有正文的低星评价及其编号会传给已配置的模型服务。");
   renderListings(report);
   renderAlerts(report, currentReport?.data_source === report.data_source);
   $("#report").hidden = false;
@@ -378,7 +380,16 @@ async function updateData(path, options, pending, success) {
   }
 }
 
-function bindControls() {
+function importCsv(body, checked) {
+  return updateData(
+    `/api/import?full_ratings=${checked}`,
+    {headers: {"Content-Type": "text/csv"}, body},
+    "正在导入 CSV…",
+    (report) => `已导入 ${report.input_rows} 条评价，其中 ${report.total_reviews} 条差评。`,
+  );
+}
+
+function bindControls(workbench) {
   for (const button of rankButtons) {
     button.addEventListener("click", () => {
       rankingDimension = button.dataset.rank;
@@ -394,6 +405,27 @@ function bindControls() {
     setImportStatus("");
     importDialog.showModal();
   });
+  if (workbench.interactive_sandbox) {
+    for (const selector of ['label[for="review-csv"]', "#review-csv", "#import-submit"]) $(selector).hidden = true;
+    $("#review-csv").required = false;
+    $("#csv-help").textContent = "公网演示提供可下载的合成 CSV，真实评价可以在本机工作台导入。";
+    $("#full-ratings").checked = true;
+    $("#sample-import-actions").hidden = false;
+    $("#download-sample").href = workbench.sample_csv.url;
+    $("#import-sample").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        const response = await fetch(workbench.sample_csv.url);
+        if (!response.ok) throw new Error("暂时无法读取样例 CSV。");
+        await importCsv(await response.blob(), $("#full-ratings").checked);
+      } catch (error) {
+        setImportStatus(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
   $("#csv-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const [file] = $("#review-csv").files;
@@ -402,12 +434,7 @@ function bindControls() {
       return;
     }
     const checked = $("#full-ratings").checked;
-    const imported = await updateData(
-      `/api/import?full_ratings=${checked}`,
-      {headers: {"Content-Type": "text/csv"}, body: file},
-      "正在导入并重新分析…",
-      (report) => `已导入 ${report.input_rows} 条评价，其中 ${report.total_reviews} 条差评。`,
-    );
+    const imported = await importCsv(file, checked);
     if (imported) event.target.reset();
   });
   $("#simulate-button").addEventListener("click", () => updateData(
@@ -426,14 +453,14 @@ async function loadDashboard() {
     const [report, workbench] = await Promise.all([fetchJSON("/api/report"), fetchJSON("/api/v1/workbench")]);
     bindSourceWorkbench(workbench);
     renderDashboard(report);
-    bindControls();
+    bindControls(workbench);
     $("#preview-button").disabled = false;
     $("#import-button").disabled = sourceBusy;
-    $("#import-button").hidden = workbench.public_demo;
+    $("#import-button").hidden = workbench.public_demo && !workbench.interactive_sandbox;
     state.hidden = true;
   } catch (error) {
     console.error(error);
-    state.textContent = "看板加载失败。确认本地服务已启动后，刷新页面重试。";
+    state.textContent = "看板加载失败。刷新页面重试。";
     state.hidden = false;
   }
 }

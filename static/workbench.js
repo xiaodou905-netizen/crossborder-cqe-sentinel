@@ -146,10 +146,12 @@ async function submitRun(scenario) {
 function bindSourceWorkbench(config) {
   workbenchConfig = config;
   latestReadyRun = config.latest_ready;
-  $("#source-profile").textContent = config.synthetic_sources
-    ? "合成来源 · 真实 HTTP 分页 · 追溯到批次与检验记录"
-    : "已配置 HTTP 来源 · 追溯到批次与检验记录";
-  $("#fault-button").hidden = config.public_demo || !config.synthetic_sources;
+  $("#source-profile").textContent = config.interactive_sandbox
+    ? "公网沙盒 · 合成三源分页核验 · 会话隔离"
+    : (config.synthetic_sources
+        ? "合成来源 · 真实 HTTP 分页 · 追溯到批次与检验记录"
+        : "已配置 HTTP 来源 · 追溯到批次与检验记录");
+  $("#fault-button").hidden = !config.synthetic_sources || (config.public_demo && !config.interactive_sandbox);
   showRun(config.latest);
   $("#sync-button").addEventListener("click", () => submitRun("normal"));
   $("#fault-button").addEventListener("click", () => submitRun("trace_unavailable"));
@@ -189,7 +191,7 @@ function renderQualityEvidence(section, alert, report) {
   for (const event of triage.history) {
     section.append(element("p", `${triageStates[event.to_phase]} · ${event.note}`, "triage-history"));
   }
-  if (workbenchConfig.public_demo || triage.phase === "verification_requested") return;
+  if ((workbenchConfig.public_demo && !workbenchConfig.interactive_sandbox) || triage.phase === "verification_requested") return;
   const investigating = triage.phase === "investigating";
   if (investigating && quality.stage !== "reproduced") {
     section.append(element("p", "提交复验前需同批次、同失效的复现记录。", "quality-meta"));
