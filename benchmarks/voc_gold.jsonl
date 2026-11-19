@@ -1,0 +1,58 @@
+{"id": "VOC-GOLD-001", "text": "The cracked solder joint at J2 opened up after fitting the lock.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-002", "text": "Service photos show cold solder where the socket meets the adjustment board.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-003", "text": "A loose solder joint under the connector made the display blink whenever I tapped the panel.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-004", "text": "This replacement has 焊点开裂 on the connector, confirmed under magnification.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-005", "text": "板端连接器虚焊，轻敲后供电恢复。I returned the module.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-006", "text": "The solder fillet is visibly fractured around a connector pin; the cable is intact.", "category": "来料不良", "issue": "connector_solder"}
+{"id": "VOC-GOLD-007", "text": "I found a crushed inner tray beside the undamaged carton wall.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-008", "text": "The crushed liner left the retaining clip loose against the black trim.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-009", "text": "The crushed foam insert flattened at the handle. The shipping label was intact.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-010", "text": "外箱完整，内衬压溃后零件撞到面板。", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-011", "text": "Could see 内衬压碎 with a new scuff underneath the accessory bag.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-012", "text": "珍珠棉塌陷，开箱后拉手松动，纸箱没有击穿痕迹。", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-013", "text": "A collapsed insert let the rotor migrate while the box remained square.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-014", "text": "The protective molded cradle inside the box had buckled flat where the latch was held.", "category": "包装破损", "issue": "inner_tray_crush"}
+{"id": "VOC-GOLD-015", "text": "Below zero, the fingerprint reader rejected my registered thumb twice.", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-016", "text": "After a freezing night the fingerprint sensor needs three retries before it unlocks.", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-017", "text": "The fingerprint sensor failed in subzero weather; the same finger worked after warming.", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-018", "text": "低温下指纹识别失败，拿进室内后同一根手指正常。", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-019", "text": "零下连续重试，指纹一直无法识别到更新前的速度。", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-020", "text": "指纹识别成功率下降，仅低温时能稳定复现。", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-021", "text": "At −8 °C the biometric pad asks me to try three times. It is fine indoors.", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-022", "text": "On below-zero mornings the fingerprint reader takes four attempts before opening.", "category": "功能故障", "issue": "cold_fingerprint"}
+{"id": "VOC-GOLD-023", "text": "The keypad logged phantom touches with nobody standing outside.", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-024", "text": "It wakes by itself on humid nights and drains charge.", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-025", "text": "Ghost inputs appeared in the keypad event list after a shower.", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-026", "text": "走廊无人经过时键盘误触，几分钟闪一次。", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-027", "text": "面板没被碰也会自动唤醒，电量掉得比正常快。", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-028", "text": "The keyboard backlight turns on repeatedly while the panel is untouched.", "category": "功能故障", "issue": "false_touch"}
+{"id": "VOC-GOLD-029", "text": "The punctured shipping carton was marked at handover and the cover underneath had a dent.", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-030", "text": "The parcel was dropped in the delivery clip. Only the struck side of the frame bent.", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-031", "text": "The carrier marked damaged on the handoff note; the package corner was folded inward.", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-032", "text": "外箱穿孔对应面板贯穿划痕，签收时已拍照。", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-033", "text": "开箱发现同方向的物流撞击痕迹，托盘侧边有压印。", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-034", "text": "The outer carton split against a staple, leaving a matching chip through the packing.", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-035", "text": "The shipping package had a new gouge from the forklift and the carrier photographed the handover.", "category": "物流损坏", "issue": "parcel_impact"}
+{"id": "VOC-GOLD-036", "text": "The oversized mounting pin won't enter the incoming fit gauge.", "category": "来料不良", "issue": null}
+{"id": "VOC-GOLD-037", "text": "螺柱孔径来料超差，和合格套件的实测差值已记录。", "category": "来料不良", "issue": null}
+{"id": "VOC-GOLD-038", "text": "It won't pair with a second phone after a clean reset.", "category": "功能故障", "issue": null}
+{"id": "VOC-GOLD-039", "text": "插入新电池仍然无法开机，但接触端子外观正常。", "category": "功能故障", "issue": null}
+{"id": "VOC-GOLD-040", "text": "The unit repeatedly shuts down after I update the settings.", "category": "功能故障", "issue": null}
+{"id": "VOC-GOLD-041", "text": "Torn inner packaging left the keypad exposed at unboxing.", "category": "包装破损", "issue": null}
+{"id": "VOC-GOLD-042", "text": "内衬松脱后可以听到配件滚动，外箱没破。", "category": "包装破损", "issue": null}
+{"id": "VOC-GOLD-043", "text": "The item was damaged in transit, confirmed on the signed carrier sticker.", "category": "物流损坏", "issue": null}
+{"id": "VOC-GOLD-044", "text": "到货在签收单上备注运输损坏，留存外观照片。", "category": "物流损坏", "issue": null}
+{"id": "VOC-GOLD-045", "text": "Delivery was two days late but the item worked.", "category": null, "issue": null}
+{"id": "VOC-GOLD-046", "text": "No crushed inner tray. I returned it over the price.", "category": null, "issue": null}
+{"id": "VOC-GOLD-047", "text": "No sign of a visible problem. I simply ordered the wrong color.", "category": null, "issue": null}
+{"id": "VOC-GOLD-048", "text": "The fingerprint reader worked first time in freezing weather. One star for payment support.", "category": null, "issue": null}
+{"id": "VOC-GOLD-049", "text": "没有发现虚焊，网页描述颜色不准确。", "category": null, "issue": null}
+{"id": "VOC-GOLD-050", "text": "未见物流撞击，差评是因为安装预约慢。", "category": null, "issue": null}
+{"id": "VOC-GOLD-051", "text": "Do not confuse cold solder with intermittent symptoms. I have no physical evidence here.", "category": null, "issue": null}
+{"id": "VOC-GOLD-052", "text": "It was not what I expected. Cannot point to a defect.", "category": null, "issue": null}
+{"id": "VOC-GOLD-053", "text": "Same item was cheaper at another store.", "category": null, "issue": null}
+{"id": "VOC-GOLD-054", "text": "My return reason is personal preference.", "category": null, "issue": null}
+{"id": "VOC-GOLD-055", "text": "很难判断是谁损坏，手上没有实物和照片。", "category": null, "issue": null}
+{"id": "VOC-GOLD-056", "text": "The fingerprint reader showed my stored profile. The last shipment tracking email was confusing.", "category": null, "issue": null}
+{"id": "VOC-GOLD-057", "text": "The lock came without a single visible mark. I received it too late for the appointment.", "category": null, "issue": null}
+{"id": "VOC-GOLD-058", "text": "Oversized box for my hallway, but the product itself was fine.", "category": null, "issue": null}

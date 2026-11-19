@@ -33,6 +33,7 @@ class IssueRule:
     category: Category
     terms: tuple[str, ...]
     context: tuple[str, ...] = ()
+    symptoms: tuple[str, ...] = ()
 
 
 # Specific observations take precedence over general symptom words.
@@ -47,6 +48,8 @@ ISSUES = {
         Category.FUNCTION,
         ("fingerprint reader", "fingerprint sensor", "fingerprint unlock", "fingerprint", "指纹识别", "指纹"),
         ("freezing", "subzero", "below zero", "minus", "cold", "低温", "零下"),
+        ("rejected", "rejects", "retries", "retry", "fails", "failed", "refuses", "wouldn't read",
+         "不识别", "识别不出", "识别失败", "重试", "按三四次", "成功率下降"),
     ),
     Issue.PARCEL_IMPACT: IssueRule(
         "外箱运输撞击",
@@ -127,27 +130,61 @@ class BatchResponse(BaseModel):
     results: list[BatchItem] = Field(min_length=1, max_length=BATCH_SIZE)
 
 
+@dataclass(frozen=True)
+class EvidenceSpan:
+    start: int
+    end: int
+    quote: str
+
+
+def evidence_spans(text: str, keywords: list[str]) -> list[EvidenceSpan]:
+    spans = []
+    for term in keywords:
+        match = re.search(re.escape(term), text, flags=re.IGNORECASE)
+        if match:
+            spans.append(EvidenceSpan(match.start(), match.end(), match[0]))
+    return sorted(spans, key=lambda span: (span.start, -span.end))
+
+
+NEGATION = re.compile(
+    r"(?:\b(?:no|not|never|without)(?:\s+(?:a|an|any|the|signs|of))*\s+"
+    r"|\b(?:do not|don't|never)\s+(?:assume|confuse|conclude|infer)\s+"
+    r"|没有(?:发现)?|未见|并无|不存在)$",
+    flags=re.IGNORECASE,
+)
+
+
 def evidence_phrases(text: str, terms: tuple[str, ...]) -> list[str]:
     hits = []
     for term in terms:
         pattern = re.escape(term)
         if term.isascii():
             pattern = rf"(?<![a-z0-9]){pattern}(?![a-z0-9])"
-        match = re.search(pattern, text, flags=re.IGNORECASE)
+        match = next((
+            occurrence for occurrence in re.finditer(pattern, text, flags=re.IGNORECASE)
+            if not NEGATION.search(text[max(0, occurrence.start() - 40):occurrence.start()])
+        ), None)
         if match and not any(match[0].casefold() in hit.casefold() for hit in hits):
             hits.append(match[0])
     return hits
 
 
+def known_issue_phrases(text: str, issue: Issue) -> list[str]:
+    rule = ISSUES[issue]
+    phrases = evidence_phrases(text, rule.terms)
+    context = evidence_phrases(text, rule.context)
+    symptoms = evidence_phrases(text, rule.symptoms)
+    if not phrases or (rule.context and not context) or (rule.symptoms and not symptoms):
+        return []
+    return list(dict.fromkeys(symptoms + context + phrases))[:MAX_KEYWORDS]
+
+
 def classify_demo(text: str) -> Tag:
     """Apply transparent bilingual rules with one primary category per review."""
     for issue, rule in ISSUES.items():
-        phrases = evidence_phrases(text, rule.terms)
-        if not phrases:
-            continue
-        context = evidence_phrases(text, rule.context)
-        if not rule.context or context:
-            return Tag(category=rule.category, issue=issue, keywords=(context + phrases)[:MAX_KEYWORDS])
+        phrases = known_issue_phrases(text, issue)
+        if phrases:
+            return Tag(category=rule.category, issue=issue, keywords=phrases)
 
     for category, terms in CATEGORY_TERMS.items():
         phrases = evidence_phrases(text, terms)
@@ -223,9 +260,13 @@ def classify_compatible(
 
         for row in batch:
             item = by_id[row.review_id]
-            if any(term.casefold() not in row.review_text.casefold() for term in item.keywords):
+            if len(evidence_spans(row.review_text, item.keywords)) != len(item.keywords):
                 raise RuntimeError(f"模型批次 {batch_number} 的关键词无法在评论原文中核实。")
-            tag = Tag(category=item.category, issue=item.issue, keywords=item.keywords)
+            phrases = item.keywords if item.issue is None else known_issue_phrases(row.review_text, item.issue)
+            if phrases:
+                tag = Tag(category=item.category, issue=item.issue, keywords=phrases)
+            else:
+                tag = Tag(category=None, issue=None, keywords=[])
             classified.append(TaggedReview(row, tag))
     return classified
 

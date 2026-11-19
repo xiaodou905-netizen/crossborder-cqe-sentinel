@@ -5,6 +5,7 @@
 ## 8D-001｜连接器焊点开裂导致模组间歇掉电
 
 - 类别：来料不良
+- 失效代码：connector_solder
 - 结案日期：2026-04-17
 - 检索词：连接器虚焊|虚焊|焊点开裂|cold solder|cracked solder joint|loose solder joint|solder crack
 
@@ -43,6 +44,7 @@ CQE 与 Supplier-C 对隔离品处置和连续三批验证记录签字后关闭�
 ## 8D-002｜EPE 珍珠棉内衬在运输跌落中压溃
 
 - 类别：包装破损
+- 失效代码：inner_tray_crush
 - 结案日期：2026-06-12
 - 检索词：包装内衬压碎|内衬压溃|珍珠棉塌陷|crushed inner tray|inner tray crushed|crushed liner|collapsed insert|crushed foam insert|EPE insert|drop test
 
@@ -81,6 +83,7 @@ SL-Pro-US 到货后内衬局部压碎，外箱基本完整，机身边角及旋�
 ## 8D-003｜电容键盘固件防误触更新
 
 - 类别：功能故障
+- 失效代码：false_touch
 - 结案日期：2026-07-24
 - 检索词：键盘误触唤醒|误触|自动唤醒|phantom touches|false touch|ghost inputs|wakes by itself|self-wake
 
@@ -119,6 +122,7 @@ SL-Pro-US 到货后内衬局部压碎，外箱基本完整，机身边角及旋�
 ## 8D-004｜低温下指纹读头采样信号下降
 
 - 类别：功能故障
+- 失效代码：cold_fingerprint
 - 结案日期：2026-08-28
 - 检索词：指纹低温识别率下降|低温|零下|指纹识别|fingerprint reader|fingerprint sensor|fingerprint unlock|freezing|subzero|below zero|cold
 
@@ -157,6 +161,7 @@ Supplier-B 提交密封变更和测量记录。CQE 与可靠性工程师签署�
 ## 8D-005｜承运中转碰撞造成外箱穿孔
 
 - 类别：物流损坏
+- 失效代码：parcel_impact
 - 结案日期：2026-09-18
 - 检索词：外箱运输撞击|物流撞击|外箱穿孔|punctured shipping carton|courier impact|carrier marked damaged|outer carton split|parcel was dropped
 

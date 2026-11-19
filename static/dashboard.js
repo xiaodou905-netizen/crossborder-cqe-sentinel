@@ -33,6 +33,19 @@ function fill(root, fields) {
   }
 }
 
+function reviewQuote(row) {
+  const quote = document.createElement("blockquote");
+  const chars = Array.from(row.review_text);
+  let cursor = 0;
+  for (const span of row.spans ?? []) {
+    if (span.start < cursor || span.end > chars.length) continue;
+    quote.append(chars.slice(cursor, span.start).join(""), element("mark", chars.slice(span.start, span.end).join("")));
+    cursor = span.end;
+  }
+  quote.append(chars.slice(cursor).join(""));
+  return quote;
+}
+
 async function fetchJSON(path, options) {
   const response = await fetch(path, {cache: "no-store", ...options}).catch(() => {
     throw new Error("无法连接本地分析服务。");
@@ -44,7 +57,7 @@ async function fetchJSON(path, options) {
   return response.json();
 }
 
-function renderSignal(alert, index, expanded) {
+function renderSignal(alert, index, expanded, report) {
   const banner = template("#signal-template");
   const details = template("#case-template");
   const isHigh = alert.level === "重点预警";
@@ -80,9 +93,10 @@ function renderSignal(alert, index, expanded) {
   const evidence = $("[data-field=evidence]", details);
   for (const row of alert.evidence) {
     const item = document.createElement("li");
+    const trace = row.trace_ref ? `  ·  ${row.trace_ref}` : "";
     item.append(
-      element("p", `${row.review_id}  ·  ${row.date}  ·  ${row.stars} 星`),
-      element("blockquote", row.review_text),
+      element("p", `${row.review_id}  ·  ${row.date}  ·  ${row.stars} 星${trace}`),
+      reviewQuote(row),
     );
     evidence.append(item);
   }
@@ -91,7 +105,7 @@ function renderSignal(alert, index, expanded) {
     const {case: match, matched_keywords: terms} = alert.recommendation;
     fill(details, {
       "case-title": match.title,
-      "case-meta": `${match.case_id}  ·  案例结案 ${match.closed_on}`,
+      "case-meta": `${match.case_id}  ·  案例结案 ${match.closed_on}  ·  重排分 ${alert.recommendation.score.toFixed(2)}`,
       cause: match.root_cause,
       action: match.corrective_action,
       verification: match.verification,
@@ -101,6 +115,7 @@ function renderSignal(alert, index, expanded) {
     $("[data-field=matched-case]", details).hidden = true;
     $("[data-field=no-match]", details).hidden = false;
   }
+  if (alert.quality_evidence) renderQualityEvidence($("[data-field=source-evidence]", details), alert, report);
   $("#signal-list").append(banner);
   $("#case-list").append(details);
 }
@@ -120,14 +135,14 @@ function renderAlerts(report, preserveExpanded) {
     $("#signal-list").append(element("p", "当前窗口无达到阈值的客诉信号。", "empty-line"));
     $("#case-list").append(element("p", "有新预警时，这里会显示可参考的历史案例。", "empty-line"));
   }
-  alerts.forEach((alert, index) => renderSignal(alert, index, expanded));
+  alerts.forEach((alert, index) => renderSignal(alert, index, expanded, report));
 }
 
 function renderListings(report) {
   const {listings, rating_scope: scope, listing_scenario: scenario} = report;
   const scopeLabels = {
     demo: "合成全星级 · 情景估算",
-    full: "导入全星级 · 情景估算",
+    full: (report.data_source === "sync" ? "同步全星级" : "导入全星级") + " · 情景估算",
     partial: "全星级数据待补",
   };
   $("#listing-scope").textContent = scopeLabels[scope];
@@ -316,6 +331,7 @@ function renderDashboard(report) {
   const modeLabel = report.demo_mode ? "本地规则" : "兼容 API";
   let dataLabel = imported ? `CSV 导入 · ${modeLabel}` : "合成数据 · " + (report.demo_mode ? "无密钥演示" : modeLabel);
   if (report.simulated_reviews) dataLabel = `合成数据 · 已追加 ${report.simulated_reviews} 条模拟差评`;
+  if (report.sync) dataLabel = (report.sync.profile === "synthetic_http" ? "合成三源同步" : "已配置三源同步") + ` · ${modeLabel}`;
   $("#mode-label").textContent = dataLabel;
   $("#restore-import").hidden = imported || !report.has_import;
   $("#import-mode").textContent = report.demo_mode
@@ -327,6 +343,7 @@ function renderDashboard(report) {
   renderDistribution(report);
   renderRankings(report);
   currentReport = report;
+  renderSourceContext(report);
 }
 
 function setImportStatus(text, error = false) {
@@ -405,10 +422,13 @@ function bindControls() {
 async function loadDashboard() {
   const state = $("#page-status");
   try {
-    renderDashboard(await fetchJSON("/api/report"));
+    const [report, workbench] = await Promise.all([fetchJSON("/api/report"), fetchJSON("/api/v1/workbench")]);
+    bindSourceWorkbench(workbench);
+    renderDashboard(report);
     bindControls();
     $("#preview-button").disabled = false;
-    $("#import-button").disabled = false;
+    $("#import-button").disabled = sourceBusy;
+    $("#import-button").hidden = workbench.public_demo;
     state.hidden = true;
   } catch (error) {
     console.error(error);
@@ -417,4 +437,4 @@ async function loadDashboard() {
   }
 }
 
-loadDashboard();
+document.addEventListener("DOMContentLoaded", loadDashboard);

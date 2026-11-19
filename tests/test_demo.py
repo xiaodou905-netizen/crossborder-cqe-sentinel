@@ -7,9 +7,11 @@ from unittest.mock import patch
 
 import httpx
 
-from app import KNOWLEDGE_BASE, REVIEWS, build_report, create_app, load_reviews
+from app import build_report, create_app
 from core.alert_engine import Level, evaluate_signals
 from core.rag_8d import CaseIndex, read_cases
+from core.reporting import KNOWLEDGE_BASE, REVIEWS
+from core.review_data import load_reviews
 from core.tagger import Category, Tag, TaggedReview, classify_compatible
 
 
@@ -26,7 +28,7 @@ IMPORT_SAMPLE = (
 
 @asynccontextmanager
 async def dashboard_client():
-    app = create_app()
+    app = create_app(db_path=":memory:")
     with patch.dict(os.environ, {"DEMO_MODE": "1"}):
         async with app.router.lifespan_context(app), httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
@@ -156,6 +158,23 @@ class DashboardTests(unittest.IsolatedAsyncioTestCase):
 
 
 class CompatibleApiTests(unittest.TestCase):
+    def test_known_mode_abstains_when_literal_quote_does_not_support_failure(self):
+        review = load_reviews(REVIEWS)[0].model_copy(update={
+            "review_text": "The fingerprint reader worked first time in freezing weather.",
+        })
+        result = {
+            "review_id": review.review_id, "issue": "cold_fingerprint",
+            "category": "功能故障", "keywords": ["fingerprint reader", "freezing"],
+        }
+
+        def reply(_request):
+            return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps({"results": [result]})}}]})
+
+        with httpx.Client(base_url="https://localhost/v1/", transport=httpx.MockTransport(reply)) as client:
+            tagged, = classify_compatible([review], client, "mock-model", json_mode=True)
+        self.assertIsNone(tagged.tag.issue)
+        self.assertIsNone(tagged.tag.category)
+
     def test_chat_completion_contract_and_validation(self):
         review = load_reviews(REVIEWS)[0].model_copy(update={"review_text": "The crushed inner tray had ripped."})
         valid = {"review_id": review.review_id, "category": "包装破损", "issue": "inner_tray_crush",

@@ -1,142 +1,114 @@
 # Crossborder CQE Sentinel
 
-海外跨境电商 VOC 质量归因与早期预警 Agent。它把海外平台的低星评论归到可排查的失效模式，按 SKU 和供应商找出短期增长，再调出历史 8D 的根因、整改措施和验证记录。CQE 可据此优先跟进影响 Listing 星级的重复客诉，并在整改后结合全量星级数据评估效果。
+**把海外智能硬件客诉追到出货批次，核对同批次的现场检验，再决定是否提交复验。**
 
-演示包含 80 条 1–2 星英文或中英双语评论、合成的 3–5 星评分分布和 5 份完整 8D。品牌 `Brand-Mock`、SKU、供应商、批次及案例数据均为虚构。预警报告描述差评样本中的变化，实物、批次追溯和检验记录用于确认当前根因。
+渠道评论给出早期信号，出货追溯定位批次和供方，QMS 检验提供复现证据。工作台把三者放进可回查的同步快照，附历史 8D 和 Listing 星级改善情景，让 CQE 能同时解释排查优先级和业务影响。
 
-## 一键启动
+[60 秒本地体验](#60-秒本地体验) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
 
-安装 Python 3.11 或以上版本。在项目目录运行以下命令，然后打开 [本地看板](http://127.0.0.1:8001/)。
+| 已在本地运行的证据 | 结果 |
+| --- | --- |
+| 三源 HTTP 分页回放 | **408 条评分、13 条追溯、4 条检验**。80 条差评中 **77 条**关联批次 |
+| 同批次质量证据 | 包装压溃关联 `QMS-26-117` 跌落复现。低温指纹关联检验观察，进入复验仍需同模式复现证据 |
+| 异常恢复 | 追溯源 503，重试两次后本轮失败，上一成功快照继续可读 |
+| VOC 与检索基准 | **89.8% Macro-F1**（58 条）。8D **Recall@3 / MRR@3 均为 1.000**（11 条有标签的检索题，库内 5 案例） |
+
+仓库使用脱敏合成数据。已验证同进程 demo 的实际 HTTP 请求，也用三个独立本地进程作为配置化上游完成联调。接入契约和业务样例可在本机复跑。
+
+![CQE 多源质量证据工作台](docs/dashboard.jpg)
+
+## 它解决什么
+
+| CQE 的实际问题 | 工作台提供的证据与动作 |
+| --- | --- |
+| 包装内衬问题和承运撞击都可能表现为到货有划痕 | 保留英文或双语原句和触发词位置，区分失效模式。以追溯引用关联供方和批次 |
+| 指纹低温异常条数少，手工拉表容易错过增长 | 对比同 SKU、同供方近 7 天和此前 28 天的比例及日均条数，列出样本分母与回放日期 |
+| 历史 8D 看起来相关，现场证据仍待核实 | 检索结果附 D4/D5/D6 与重排分。只有同 SKU、批次、失效代码的 QMS 记录才进入当前告警 |
+| 质量团队需要说明整改对 Listing 有什么价值 | 全星级样本用于估算当前星级，按未来 30 天的未整改情景计算挽回幅度 |
+
+## 60 秒本地体验
+
+需要 Python 3.11+。在仓库根目录运行以下命令，打开 [CQE 工作台](http://127.0.0.1:8001/)。
 
 ```bash
 ./start.sh
 ```
 
-首次启动会创建 `.venv` 并安装依赖。默认启用 `DEMO_MODE=1`。Tailwind 样式和 Chart.js 已编译或随项目交付，依赖安装结束后可以离线演示。停止服务时按 `Ctrl+C`。
+Windows PowerShell 可运行 `py -3 -m venv .venv`，再用 `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` 安装依赖，以及 `.\.venv\Scripts\python.exe app.py` 启动。首次安装 Python 依赖需要网络。前端资源随仓库提供。
 
-Windows 可在 PowerShell 中执行。
+1. 点 **同步三源**，看渠道、追溯与 QMS 的每源页数、条数和耗时。打开 **快照 JSON** 核对输入 SHA-256 和源记录编号。
+2. 展开 **包装内衬压碎**，顺着评论原句、`TR-LOT-PU-04`、`QMS-26-117` 到历史案例 `8D-002`。填写备注后可开始调查、提交复验。对照低温指纹的证据门槛。
+3. 点 **回放来源故障**，查看追溯源重试与失败状态。已生成的快照仍可查看。点 **导入 CSV / 模拟实时抓取** 可测试另一个入口。
 
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe app.py
-```
+接口文档可直接打开 [本机 OpenAPI](http://127.0.0.1:8001/docs)。
 
-## 系统架构
+## 数据流与状态
 
 ```mermaid
 flowchart LR
-    CSV["导入 CSV 或模拟实时抓取"] --> Tag["低星分类与原文失效关键词"]
-    CSV --> Listing["样本加权星级与 30 天整改情景"]
-    Tag --> Stats["问题占比和供应商 / SKU 排行"]
-    Tag --> Signal["7 天窗口与 28 天基线对比"]
-    KB["5 份历史 8D"] --> Search["TF-IDF 与关键词检索"]
-    Signal --> Search
-    Search --> Listing
-    Signal --> Report["FastAPI 分析报告"]
-    Stats --> Report
-    Search --> Report
-    Listing --> Report
-    Report --> Web["Tailwind / Chart.js 看板"]
-    Report --> Card["飞书模拟卡片与 JSON 预览"]
+    M["渠道评分 · 分页快照"] --> A["异步 HTTP Adapter"]
+    S["MES / 出货追溯"] --> A
+    Q["QMS 现场检验"] --> A
+    A --> J["合并与校验 trace_ref / SKU / 时间"]
+    J --> T["规则或兼容模型 · 原文跨度校验"]
+    T --> W["7 日与 28 日预警"]
+    W --> K["同类历史 8D · TF-IDF 候选与重排"]
+    W --> E["关联同 SKU / 批次 / 失效的检验"]
+    K --> P["SQLite 同步快照"]
+    E --> P
+    P --> UI["前端 · 飞书预览 · Listing 情景"]
+    P --> H["CQE 研判备注与复验移交"]
 ```
 
-- [`core/tagger.py`](core/tagger.py) 用规则或模型为每条差评提取一个主类和原文关键词。Pydantic 校验类别、失效代码及字段结构，模型结果额外核对评论编号与关键词原文。分类支持来料不良、包装破损、功能故障和物流损坏，证据不足的评论进入待复核。
-- [`core/alert_engine.py`](core/alert_engine.py) 按问题类别统计构成，按供应商和 SKU 排差评条数，并对同一 `SKU × 供应商` 下的失效分别比较两段时间。已知模式使用标准失效代码，其他现象按类别和首条标准化关键词聚合。
-- [`core/rag_8d.py`](core/rag_8d.py) 用英文词和中文双字词做 TF-IDF，结合检索词重合度。在同类且截至当日已结案的案例中返回最相似的记录，并附 D4 根因、D5 措施和 D6 验证。低于阈值时提示人工排查。
-- [`core/listing_metrics.py`](core/listing_metrics.py) 汇总各 SKU 的星级分布，并使用匹配到历史 8D 的预警估算整改收益。
-- [`app.py`](app.py) 在启动、导入和模拟抓取后生成报告。看板提供两种排行、可展开的 8D 原文证据和飞书模拟预览。`/api/report` 返回当前分析结果，`/api/feishu-preview` 返回当前报告的本地模拟卡片 JSON。卡片结构参考 [飞书自定义机器人使用指南](https://open.feishu.cn/document/ukTMukTMukTM/ucTM5YjL3ETO24yNxkjN?lang=zh-CN%2C)。
+- **同步状态**从受理、拉取到分析。三源全部通过校验才提交成功快照。请求幂等键复用同一任务，失败与重启中断可以回查。
+- **调查状态**从待研判、调查中到已提交复验。保存备注和版本，只有同批次同失效的复现记录才可提交复验。正式根因、措施有效性与结案依现场 QMS 流程。
+- **规则和模型**共享分类枚举与失效代码。模型输出要通过 Pydantic、评论 ID 覆盖和原文定位。已知失效另过可观察证据门槛。低温指纹要求同时出现指纹、低温和识别下降线索。
+- **历史方案**先排除分类冲突和当时尚未结案的案例。TF-IDF 召回后按词相似度、检索词覆盖和失效代码重排，低分弃答。展示既有 D4/D5/D6 原文。
 
-## 导入真实导出的电商评论 CSV
-
-1. 在有权限的电商后台导出评论。要评估星级，导出所选 SKU 和期间的全部星级，包含只有评分的记录。仅做客诉归因时可以只导出 1–2 星。
-2. 调整表头，使每行对应一条评价。转为 UTF-8 逗号分隔的 `.csv` 文件，可带 BOM，单文件最大 5 MiB。
-3. 在右上角点 **导入 CSV / 模拟实时抓取**，选文件。只有文件覆盖该期间的全部星级时才勾选 **包含所选期间的全星级评价**，然后点 **导入并分析**。
-
-| 项目字段 | 如何从导出文件准备 |
-| --- | --- |
-| `review_id` | 评价编号，每行唯一 |
-| `date` | 评价日期，统一为 `YYYY-MM-DD` |
-| `sku` | Seller SKU 或稳定的 Listing 编码。多个站点的相同 SKU 建议加站点后缀 |
-| `stars` | 1–5 的整数，例如把 `5.0 out of 5 stars` 转为 `5` |
-| `review_text` | 评论原文。有评分无正文时留空，低星评价进入待复核 |
-| `brand`、`supplier`、`lot` | 可选。根据产品或订单映射表补齐供应商及批次，空值显示「未标注」 |
-
-额外列会被忽略。正文包含逗号、双引号或换行时，保留 CSV 导出工具生成的引号转义。默认本地规则适用于内置失效短语，超出规则覆盖的低星评论进入待复核。导入兼容 API 模式时，有正文的低星评价及其编号会传给已配置的服务，真实文件请先移除正文里的顾客标识及订单号。
-
-导入以文件中的最新评价日作为回放终点，分析结果保留在本地服务内存。点击 **一键模拟新增 5 条包装破损差评** 会在示例看板追加五条同批次评论。可通过 **返回上次导入结果** 回到已分析的 CSV。重启服务后从初始示例重新开始。
-
-也可通过 API 导入。在调用方确认文件包含全星级评价时，使用 `full_ratings=true`。
-
-```bash
-curl -fsS -H 'Content-Type: text/csv' --data-binary @reviews.csv \
-  'http://127.0.0.1:8001/api/import?full_ratings=true'
-```
-
-## 预警规则
-
-VOC 分析纳入 1–2 星评价，默认以样本中最新的评价日期为回放终点。日窗口包含起止日，近 7 天含终点，基线为紧邻且无重叠的此前 28 天。批次用于追溯，比较分母使用同一 SKU 与供应商在各自窗口的全部差评。
-
-| 条件 | 触发规则 |
-| --- | --- |
-| 最小样本 | 近 7 天至少 6 条差评，基线至少 10 条差评 |
-| 苗头关注 | 近 7 天同一失效至少 3 条，占比上升至少 15 个百分点。基线有命中时，占比和日均条数均达到基线的 2 倍 |
-| 重点预警 | 满足苗头条件，且近 7 天同一失效至少 6 条，占比上升至少 30 个百分点 |
-
-基线有足量差评且该失效为 0 条时，使用条数与占比增幅判断。环形图以已归类差评为分母，排行以全部样本差评为分母。看板最多显示排行前 10 名，`/api/report` 返回完整排名。
-
-## Listing 星级和整改收益口径
-
-- **当前加权星级**以各星级的评价数为权重。同一 SKU 的 `Σ(星级 × 该星级评价数) ÷ 总评价数` 是本次样本星级。Amazon 页面评分还会考虑时效和核验购买等平台因素。[Amazon 对评分方式的说明](https://sellercentral.amazon.com/seller-forums/discussions/t/9629cd2e-3989-46b4-80ae-aa87fafc8cd1)
-- **预计 30 天星级挽回**以 30 天后的未整改情景为基准。两个情景均按近 7 天评价量和星级构成外推，整改情景假设已匹配到 8D 的失效有 70% 的后续低星评价改善为 5 星。用增加的星级分值除以「已有评价数 + 预计新增评价数」得到挽回幅度。历史评价保留原星级。
-- 示例星级使用独立的合成 3–5 星分布。导入文件须声明覆盖全星级才计算当前星级，存在关联 8D 的预警才显示 30 天情景。
-
-## 复现演示结果
-
-在终端输出完整 JSON，或指定历史日期回放。
-
-```bash
-DEMO_MODE=1 ./start.sh --analyze
-DEMO_MODE=1 ./start.sh --analyze --as-of 2026-11-12
-```
-
-截至 `2026-11-19`，80 条评论全部归类，触发两条预警。回放到 `2026-11-12` 时有 55 条差评，预警数为 0。
-
-| 预警 | SKU / 供应商 | 近 7 天 | 28 天基线 | 对应历史案例 |
-| --- | --- | ---: | ---: | --- |
-| 重点预警 · 包装内衬压碎 | `SL-Pro-US` / `Supplier-A` | 8/12（66.7%） | 1/24（4.2%） | `8D-002` EPE 内衬与跌落验证 |
-| 苗头关注 · 指纹低温识别率下降 | `SL-Max-EU` / `Supplier-B` | 3/8（37.5%） | 0/17（0.0%） | `8D-004` 密封压合与低温验证 |
-
-包装异常集中于 `LOT-PU-04`，8 条均出现在最后 5 天。低温指纹评论集中于 `LOT-ME-03`。点击预警或展开 8D 卡片可核对批次和评论原文样例。
-
-初始看板中，`SL-Pro-US` 的样本加权星级为 **4.1★**，预计 30 天挽回为 **+0.4★**。模拟抓取一次后，样本从 80 条增至 85 条，包装预警从 8/12（66.7%）升至 13/17（76.5%），供应商 A 的差评从 36 条增至 41 条。
+## 评测与可复现命令
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m benchmarks.evaluate --format markdown
+.venv/bin/python -m benchmarks.smoke_http
 ```
 
-## 接入 OpenAI 兼容接口
+HTTP 冒烟需要先运行本地服务。评测包含未见表达、否定语句、无匹配案例、案例结案日晚于回放日，以及逐日窗口。8 个回放日检出 2/2 处植入信号，距首条植入分别为 **1 天和 3 天**，另有 **1 条额外告警**。分母、逐类结果和错例均可回查。[评测报告](docs/evaluation.md)
 
-将 `OPENAI_API_KEY` 设为本地环境变量，再指定服务地址和模型。地址填写包含服务版本的 API 根路径，程序会追加 `chat/completions`。服务不支持 JSON 对象模式时可设置 `OPENAI_JSON_MODE=0`，Pydantic 校验仍然生效。[Chat Completions 接口文档](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
+[GitHub Actions 工作流](.github/workflows/validate.yml)使用 Python 3.11 和 3.12 执行单测、评测报告对拍与真实 HTTP 冒烟。本仓库基准使用规则引擎和本地检索，兼容模型使用模拟响应检查契约和拒答行为。
+
+## 导入真实电商评论 CSV
+
+1. 下载有权限使用的评价导出。如果要看星级，导出同一观察期间所有星级，包括无正文评分。
+2. 保留唯一的 `review_id`，映射 `date`（`YYYY-MM-DD`）、`sku`、`stars`（1–5）和 `review_text`。可补 `brand`、`supplier` 和 `lot`，以订单或追溯记录填充。缺失显示「未标注」。
+3. 保存为 UTF-8 逗号分隔文件，可带 BOM，最大 5 MiB。双引号、逗号和正文换行按 CSV 转义保留。
+4. 点击 **导入 CSV / 模拟实时抓取** → **导入并分析**。文件包含全量星级时勾选对应选项。模拟新增 5 条只作用于示例视图，可返回上次导入结果。
+
+默认无密钥规则运行。有正文的低星评价可用 `DEMO_MODE=0` 发送给配置的兼容模型。模型仅收评论编号和正文，使用真实文件前应对正文脱敏。CSV 分析结果留在当前进程，三源同步快照和研判记录保存在本地 SQLite。[字段契约和环境变量](docs/integration.md)
+
+## Listing 星级口径
+
+**当前加权星级**用各星级的评价数加权。**30 天挽回**是整改情景和同一时期未整改情景的差值。两个情景均沿用近 7 天评价量和构成，假设关联到 8D 的失效中，70% 的后续低星评价改善到 5 星。历史评价保留原星级。示例 `SL-Pro-US` 为 **4.1★**，在该情景下 **+0.4★**。差评占比用于质量排查，估算故障率需销量或在网量分母。Amazon 页面采用自身模型并考虑时效、核验购买等因素。[Amazon 的评分说明](https://sellercentral.amazon.com/seller-forums/discussions/t/9629cd2e-3989-46b4-80ae-aa87fafc8cd1)
+
+## 在线演示部署
+
+仓库提供默认公开演示配置的 Dockerfile。公开模式运行合成 HTTP 来源并复用成功快照，CSV 导入、研判写入和故障回放留在本地模式。
 
 ```bash
-export OPENAI_BASE_URL='https://api.openai.com/v1'
-export OPENAI_MODEL='<服务商支持的模型 ID>'
-DEMO_MODE=0 ./start.sh
+docker build -t crossborder-cqe-sentinel .
+docker run --rm -p 127.0.0.1:8001:8001 crossborder-cqe-sentinel
 ```
 
-兼容模式按批向已配置的模型服务提交评论编号与原文。SKU、供应商、星级和批次字段用于本地统计。每次服务启动都会重新生成报告。本项目已用模拟 HTTP 响应验证接入格式与异常结果拦截，线上模型需要用所选服务完成联调。
+将仓库发布后，在 Render 新建 **Docker Web Service** 并连接此仓库，使用根目录 Dockerfile，Health Check Path 填 `/healthz`。应用监听平台提供的 `PORT`。部署成功后打开平台分配的 URL 并点击 **同步三源**。 [Render Web Services](https://render.com/docs/web-services) · [Health Checks](https://render.com/docs/health-checks)
 
-## 文件与前端构建
+## 代码入口
 
-- [`data/amazon_reviews_mock.csv`](data/amazon_reviews_mock.csv) 保存 80 条差评及原始批次字段。
-- [`data/demo_listing_ratings.csv`](data/demo_listing_ratings.csv) 保存示例 3–5 星评价的按日汇总，供星级估算使用。
-- [`data/historical_8d_kb.md`](data/historical_8d_kb.md) 保存 5 份 D1–D8 案例，涵盖来料虚焊、EPE 包装跌落、固件防误触、指纹低温和物流碰撞。
-- [`static/`](static/) 保存页面和已构建的前端资源，第三方授权文本随 `static/vendor/` 提供。
+| 模块 | 职责 |
+| --- | --- |
+| [`adapters/`](adapters/) | Pydantic 来源契约、HTTP 分页与合成上游 |
+| [`service/`](service/) | 异步同步、批次关联、快照存储、研判状态、OpenAPI |
+| [`core/`](core/) | 分类、预警、检索重排、星级情景 |
+| [`static/`](static/) | Tailwind / Chart.js 工作台和可回查原文 |
+| [`benchmarks/`](benchmarks/) · [`tests/`](tests/) | 标签集、离线评测、HTTP 冒烟和故障验证 |
 
-修改页面样式后可用以下命令重建 Tailwind 样式。[Tailwind CLI 文档](https://tailwindcss.com/docs/installation/tailwind-cli)
-
-```bash
-npm install --no-save --no-package-lock tailwindcss@4.3.5 @tailwindcss/cli@4.3.5
-npx tailwindcss -i static/tailwind.css -o static/dashboard.css --minify
-```
+[MIT License](LICENSE) · 供应商、SKU、检验记录和评论均为虚构。前端第三方授权文本见 [vendor](static/vendor/)。

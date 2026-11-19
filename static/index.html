@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/dashboard.css">
   <script src="/assets/vendor/chart.umd.min.js" defer></script>
   <script src="/assets/dashboard.js" defer></script>
+  <script src="/assets/workbench.js" defer></script>
 </head>
 <body class="min-h-screen">
   <header class="topbar">
@@ -37,6 +38,26 @@
         <div id="mode-label" class="mode-label"></div>
       </div>
       <p id="update-notice" class="update-notice" role="status" hidden></p>
+
+      <section class="panel source-panel" aria-labelledby="sources-heading">
+        <div class="panel-heading flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="sources-heading">多源质量证据</h2>
+            <p id="source-profile"></p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="sync-button" class="action-primary" type="button">同步三源</button>
+            <button id="fault-button" class="action-outline" type="button" hidden>回放来源故障</button>
+            <button id="latest-sync" class="action-link" type="button" hidden>查看最近成功同步</button>
+          </div>
+        </div>
+        <ul id="source-list" class="source-list" aria-label="数据源同步状态"></ul>
+        <div class="run-foot flex flex-wrap items-baseline justify-between gap-2">
+          <p id="run-status" role="status"></p>
+          <a id="snapshot-link" class="source-link" target="_blank" rel="noopener" hidden>快照 JSON ↗</a>
+        </div>
+        <p id="trace-summary" class="trace-summary" hidden></p>
+      </section>
 
       <section class="panel listing-panel" aria-labelledby="listing-heading">
         <div class="panel-heading flex flex-wrap items-start justify-between gap-2">
@@ -235,6 +256,7 @@
           <p data-field="no-match" hidden>历史案例库中暂未找到相似记录。请按当前批次和评论证据开展排查。</p>
         </div>
       </div>
+      <div data-field="source-evidence" class="source-evidence" hidden></div>
     </details>
   </template>
 </body>

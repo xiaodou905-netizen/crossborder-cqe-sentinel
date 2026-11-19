@@ -1,0 +1,6 @@
+[
+  {"inspection_id":"QMS-26-117","sku":"SL-Pro-US","lot":"LOT-PU-04","inspected_on":"2026-11-18","issue":"inner_tray_crush","outcome":"reproduced","sample_size":6,"failures":3,"method":"76 cm 角跌落后拆箱检查，3 件在旋钮与 EPE 内衬接触位置复现局部压溃。"},
+  {"inspection_id":"QMS-26-123","sku":"SL-Max-EU","lot":"LOT-ME-03","inspected_on":"2026-11-19","issue":"cold_fingerprint","outcome":"observed","sample_size":5,"failures":1,"method":"低温浸置后的初次摸查，记录到一台首触识别偏低，温湿度和回温顺序待复验。"},
+  {"inspection_id":"QMS-26-099","sku":"SL-Max-EU","lot":"LOT-ME-02","inspected_on":"2026-11-12","issue":"cold_fingerprint","outcome":"fix_verified","sample_size":10,"failures":0,"method":"另一批次的温循回归，10 件通过预设验收条件。"},
+  {"inspection_id":"QMS-26-140","sku":"SL-Pro-US","lot":"LOT-PU-04","inspected_on":"2026-11-20","issue":"inner_tray_crush","outcome":"fix_verified","sample_size":8,"failures":0,"method":"回放截止日之后补录的压溃复验，用于检验时间截断。"}
+]

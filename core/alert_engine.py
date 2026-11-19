@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from enum import Enum
 from fractions import Fraction
 
-from .tagger import ISSUES, Category, Issue, Tag, TaggedReview
+from .tagger import ISSUES, Category, EvidenceSpan, Issue, Tag, TaggedReview, evidence_spans
 
 
 RECENT_DAYS = 7
@@ -46,6 +46,7 @@ class ReviewEvidence:
     lot: str
     stars: int
     review_text: str
+    spans: list[EvidenceSpan]
 
 
 @dataclass(frozen=True)
@@ -164,8 +165,11 @@ def evaluate_signals(rows: list[TaggedReview], as_of: date) -> list[Signal]:
                 lots=dict(Counter(item.review.lot for item in ordered).most_common()),
                 keywords=[term for term, _ in keywords.most_common(6)],
                 evidence=[
-                    ReviewEvidence(row.review_id, row.date, row.lot, row.stars, row.review_text)
-                    for row in (item.review for item in ordered[:3])
+                    ReviewEvidence(
+                        item.review.review_id, item.review.date, item.review.lot, item.review.stars,
+                        item.review.review_text, evidence_spans(item.review.review_text, item.tag.keywords),
+                    )
+                    for item in ordered[:3]
                 ],
             ))
 

@@ -1,0 +1,17 @@
+{"id": "RAG-GOLD-001", "category": "来料不良", "issue": "connector_solder", "title": "连接器间歇断路", "keywords": ["cracked solder joint", "焊点开裂"], "expected": "8D-001", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-002", "category": "来料不良", "issue": "connector_solder", "title": "socket continuity drops", "keywords": ["cold solder", "loose solder joint"], "expected": "8D-001", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-003", "category": "包装破损", "issue": "inner_tray_crush", "title": "箱内承托压溃", "keywords": ["crushed inner tray", "珍珠棉塌陷"], "expected": "8D-002", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-004", "category": "包装破损", "issue": "inner_tray_crush", "title": "handle hits side wall", "keywords": ["collapsed insert", "crushed foam insert"], "expected": "8D-002", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-005", "category": "包装破损", "issue": null, "title": "EPE 崩塌与包装间隙", "keywords": ["跌落", "包装内衬压碎"], "expected": "8D-002", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-006", "category": "功能故障", "issue": "false_touch", "title": "触控待机异常", "keywords": ["phantom touches", "误触"], "expected": "8D-003", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-007", "category": "功能故障", "issue": "false_touch", "title": "humidity wake", "keywords": ["ghost inputs", "wakes by itself"], "expected": "8D-003", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-008", "category": "功能故障", "issue": "cold_fingerprint", "title": "回温后恢复的低温指纹", "keywords": ["指纹识别", "零下", "fingerprint sensor"], "expected": "8D-004", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-009", "category": "功能故障", "issue": "cold_fingerprint", "title": "sensor retries only at low temperature", "keywords": ["subzero", "fingerprint unlock"], "expected": "8D-004", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-010", "category": "物流损坏", "issue": "parcel_impact", "title": "签收前外箱破洞", "keywords": ["punctured shipping carton", "外箱穿孔"], "expected": "8D-005", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-011", "category": "物流损坏", "issue": "parcel_impact", "title": "carriage impact", "keywords": ["parcel was dropped", "outer carton split"], "expected": "8D-005", "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-012", "category": "功能故障", "issue": null, "title": "衔铁磁滞导致马达齿轮卡滞", "keywords": ["motor gearbox stalling"], "expected": null, "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-013", "category": "来料不良", "issue": null, "title": "表面色号不符", "keywords": ["paint dye mismatch"], "expected": null, "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-014", "category": "物流损坏", "issue": "parcel_impact", "title": "外箱穿孔", "keywords": ["courier impact", "外箱穿孔"], "expected": null, "as_of": "2026-09-17"}
+{"id": "RAG-GOLD-015", "category": "功能故障", "issue": "cold_fingerprint", "title": "指纹低温识别率下降", "keywords": ["fingerprint sensor", "subzero"], "expected": null, "as_of": "2026-08-27"}
+{"id": "RAG-GOLD-016", "category": "来料不良", "issue": null, "title": "崩塌和托盘压扁", "keywords": ["crushed inner tray", "包装内衬压碎"], "expected": null, "as_of": "2026-11-19"}
+{"id": "RAG-GOLD-017", "category": "功能故障", "issue": null, "title": "音量降低", "keywords": ["quiet speaker"], "expected": null, "as_of": "2026-11-19"}
