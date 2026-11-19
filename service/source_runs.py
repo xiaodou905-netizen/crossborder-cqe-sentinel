@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from dataclasses import asdict
 from time import perf_counter
 
 import httpx
@@ -67,6 +68,7 @@ class SourceRuns:
         report["sync"] = {
             "run_id": run_id, "profile": "synthetic_http" if self.synthetic else "configured_http",
             "traceability": traced.summary,
+            "trace_rejections": [asdict(item) for item in traced.rejections],
             "input_sha256": content_hash({name.value: feed.status.sha256 for name, feed in feeds.items()}),
         }
         return report

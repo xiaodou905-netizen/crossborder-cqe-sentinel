@@ -1,15 +1,15 @@
 # Crossborder CQE Sentinel
 
-**把海外智能硬件客诉追到出货批次，核对同批次的现场检验，再决定是否提交复验。**
+**面向智能硬件、IoT 与智能制造的 CQE / SQE / DQE 质量参考架构。**
 
-渠道评论给出早期信号，出货追溯定位批次和供方，QMS 检验提供复现证据。工作台把三者放进可回查的同步快照，附历史 8D 和 Listing 星级改善情景，让 CQE 能同时解释排查优先级和业务影响。
+从海外客诉追到出货批次，再用现场检验判断是否具备复验条件。工作台用可回查的同步快照串起渠道评价、出货追溯和 QMS 检验，附历史 8D 与 Listing 星级情景。
 
-[60 秒本地体验](#60-秒本地体验) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
+[本地运行与验收](#本地运行与验收) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
 
 | 已在本地运行的证据 | 结果 |
 | --- | --- |
 | 三源 HTTP 分页回放 | **408 条评分、13 条追溯、4 条检验**。80 条差评中 **77 条**关联批次 |
-| 同批次质量证据 | 包装压溃关联 `QMS-26-117` 跌落复现。低温指纹关联检验观察，进入复验仍需同模式复现证据 |
+| 同批次质量证据 | 包装压溃 `LOT-PU-04`，`QMS-26-117` 角跌后 **3/6 件异常，已复现**。低温指纹 `LOT-ME-03`，`QMS-26-123` **1/5 件异常，检验观察**。[QMS 样例](data/demo_qms_inspections.json) |
 | 异常恢复 | 追溯源 503，重试两次后本轮失败，上一成功快照继续可读 |
 | VOC 与检索基准 | **89.8% Macro-F1**（58 条）。8D **Recall@3 / MRR@3 均为 1.000**（11 条有标签的检索题，库内 5 案例） |
 
@@ -26,18 +26,24 @@
 | 历史 8D 看起来相关，现场证据仍待核实 | 检索结果附 D4/D5/D6 与重排分。只有同 SKU、批次、失效代码的 QMS 记录才进入当前告警 |
 | 质量团队需要说明整改对 Listing 有什么价值 | 全星级样本用于估算当前星级，按未来 30 天的未整改情景计算挽回幅度 |
 
-## 60 秒本地体验
+## 本地运行与验收
 
-需要 Python 3.11+。在仓库根目录运行以下命令，打开 [CQE 工作台](http://127.0.0.1:8001/)。
+需要 Python 3.11+。在仓库根目录启动后打开 [CQE 工作台](http://127.0.0.1:8001/)。首次安装 Python 依赖需要网络，前端资源随仓库提供。
 
 ```bash
 ./start.sh
 ```
 
-Windows PowerShell 可运行 `py -3 -m venv .venv`，再用 `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` 安装依赖，以及 `.\.venv\Scripts\python.exe app.py` 启动。首次安装 Python 依赖需要网络。前端资源随仓库提供。
+下面的命令会启动隔离沙盒并在验收后退出。它使用动态 loopback 端口和内存 SQLite，输出三源条数、两条告警的 QMS 记录和故障后快照回读结果。
 
-1. 点 **同步三源**，看渠道、追溯与 QMS 的每源页数、条数和耗时。打开 **快照 JSON** 核对输入 SHA-256 和源记录编号。
-2. 展开 **包装内衬压碎**，顺着评论原句、`TR-LOT-PU-04`、`QMS-26-117` 到历史案例 `8D-002`。填写备注后可开始调查、提交复验。对照低温指纹的证据门槛。
+```bash
+./start.sh --verify-demo
+```
+
+Windows PowerShell 先运行 `py -3 -m venv .venv` 和 `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`。工作台入口为 `.\.venv\Scripts\python.exe app.py`，验收入口为 `.\.venv\Scripts\python.exe -m benchmarks.smoke_http --standalone`。
+
+1. 在 [CQE 工作台](http://127.0.0.1:8001/) 点 **同步三源**。打开 **查看 3 条未关联差评**，可定位原记录和原因。打开 **快照 JSON** 核对输入 SHA-256。
+2. 对照两张告警卡的复现和观察阶段。展开 **包装内衬压碎**，顺着评论原句、`TR-LOT-PU-04`、`QMS-26-117` 到历史案例 `8D-002`。填写备注后可开始调查、提交复验。
 3. 点 **回放来源故障**，查看追溯源重试与失败状态。已生成的快照仍可查看。点 **导入 CSV / 模拟实时抓取** 可测试另一个入口。
 
 接口文档可直接打开 [本机 OpenAPI](http://127.0.0.1:8001/docs)。
@@ -70,10 +76,10 @@ flowchart LR
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
 .venv/bin/python -m benchmarks.evaluate --format markdown
-.venv/bin/python -m benchmarks.smoke_http
+./start.sh --verify-demo
 ```
 
-HTTP 冒烟需要先运行本地服务。评测包含未见表达、否定语句、无匹配案例、案例结案日晚于回放日，以及逐日窗口。8 个回放日检出 2/2 处植入信号，距首条植入分别为 **1 天和 3 天**，另有 **1 条额外告警**。分母、逐类结果和错例均可回查。[评测报告](docs/evaluation.md)
+评测包含未见表达、否定语句、无匹配案例、案例结案日晚于回放日，以及逐日窗口。8 个回放日检出 2/2 处植入信号，距首条植入分别为 **1 天和 3 天**，另有 **1 条额外告警**。分母、逐类结果和错例均可回查。[评测报告](docs/evaluation.md)
 
 [GitHub Actions 工作流](.github/workflows/validate.yml)使用 Python 3.11 和 3.12 执行单测、评测报告对拍与真实 HTTP 冒烟。本仓库基准使用规则引擎和本地检索，兼容模型使用模拟响应检查契约和拒答行为。
 

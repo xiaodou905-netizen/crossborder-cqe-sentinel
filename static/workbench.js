@@ -2,6 +2,12 @@ const sourceLabels = {reviews: "渠道评分", shipments: "出货追溯", inspec
 const sourceStates = {pending: "待拉取", running: "拉取中", succeeded: "已校验", failed: "失败"};
 const runStates = {queued: "已受理", fetching: "并行拉取", analyzing: "关联与分析", ready: "快照已生成", failed: "同步失败"};
 const evidenceStages = {signal: "客诉信号", traced: "已关联批次", inspection: "关联检验观察", reproduced: "有同批次复现"};
+const traceRejectionReasons = {
+  missing_reference: "评价未提供追溯编号",
+  unknown_reference: "出货源未找到该编号",
+  sku_mismatch: "出货与评价 SKU 不一致",
+  shipment_after_review: "出货日期晚于评价日期",
+};
 const triageStates = {pending: "待研判", investigating: "调查中", verification_requested: "已提交复验"};
 let workbenchConfig;
 let latestReadyRun;
@@ -48,7 +54,38 @@ function renderSourceContext(report) {
     trace.textContent = `差评追溯 ${coverage.linked}/${report.total_reviews} · 无编号 ${coverage.missing} · 未命中 ${coverage.unmatched} · 冲突 ${coverage.conflict}`;
     link.href = `/api/v1/runs/${sync.run_id}/report`;
   }
+  const details = $("#trace-rejections");
+  const examples = sync?.trace_rejections ?? [];
+  details.hidden = !examples.length;
+  if (examples.length) {
+    const unlinked = report.total_reviews - sync.traceability.linked;
+    $("summary", details).textContent = unlinked === examples.length
+      ? `查看 ${unlinked} 条未关联差评`
+      : `查看未关联差评样本（${examples.length}/${unlinked}）`;
+  }
+  $("ul", details).replaceChildren(...examples.map((entry) => {
+    const item = element("li", "");
+    const ref = entry.trace_ref ? ` · ${entry.trace_ref}` : "";
+    item.append(
+      element("strong", `${entry.review_id} · ${entry.sku}${ref}`),
+      element("span", traceRejectionReasons[entry.reason]),
+    );
+    return item;
+  }));
   $("#latest-sync").hidden = !latestReadyRun || latestReadyRun.run_id === sync?.run_id;
+}
+
+function showSignalEvidence(summary, quality) {
+  const {stage, inspections} = quality;
+  summary.hidden = false;
+  summary.dataset.stage = stage;
+  summary.append(element("strong", evidenceStages[stage]));
+  const record = stage === "reproduced"
+    ? inspections.find((item) => item.outcome === "reproduced")
+    : inspections[0];
+  if (record) {
+    summary.append(element("span", `${record.inspection_id} · ${record.lot} · ${record.failures}/${record.sample_size} 件异常`));
+  }
 }
 
 function setSourceBusy(busy) {

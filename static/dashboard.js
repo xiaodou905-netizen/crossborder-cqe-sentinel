@@ -78,6 +78,7 @@ function renderSignal(alert, index, expanded, report) {
     share: percentage(alert.recent.share),
     comparison: `${alert.recent.count}/${alert.recent.sample} 条，基线 ${percentage(alert.baseline.share)}`,
   });
+  if (alert.quality_evidence) showSignalEvidence($("[data-field=evidence-summary]", banner), alert.quality_evidence);
 
   const formatWindow = (window) => `${metric(window)}，${window.per_day.toFixed(2)} 条/天`;
   fill(details, {

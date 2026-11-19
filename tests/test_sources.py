@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 from time import monotonic
 from unittest.mock import patch
@@ -10,13 +11,14 @@ from unittest.mock import patch
 import httpx
 from fastapi import FastAPI
 
-from adapters.contracts import FeedPage, ShipmentTrace, Source
+from adapters.contracts import FeedPage, MarketplaceReview, ShipmentTrace, Source
 from adapters.demo_provider import demo_source_router
 from adapters.http_feeds import FeedAdapter, SourceFailure
 from app import create_app
 from core.reporting import DATA
 from service.run_models import RunState
 from service.run_store import RunStore
+from service.traceability import TRACE_REJECTION_LIMIT, UNMAPPED, normalize_reviews
 
 
 @asynccontextmanager
@@ -100,6 +102,9 @@ class SourceWorkflowTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([(s["rows"], s["pages"]) for s in good["sources"]], [(408, 9), (13, 1), (4, 1)])
             snapshot = (await client.post(f"/api/v1/runs/{run_id}/activate")).json()
             self.assertEqual(snapshot["sync"]["traceability"], {"linked": 77, "missing": 1, "unmatched": 1, "conflict": 1})
+            rejections = snapshot["sync"]["trace_rejections"]
+            self.assertEqual(len(rejections), 3)
+            self.assertEqual({row["reason"] for row in rejections}, {"missing_reference", "unknown_reference", "sku_mismatch"})
             packing, fingerprint = snapshot["alerts"]
             self.assertEqual(packing["quality_evidence"]["stage"], "reproduced")
             self.assertEqual([record["inspection_id"] for record in packing["quality_evidence"]["inspections"]],
@@ -154,6 +159,24 @@ class SourceWorkflowTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await client.post(
                 f"/api/v1/runs/{run_id}/cases/{case['case_key']}/triage", json=body,
             )).status_code, 403)
+
+
+class TraceabilityTests(unittest.TestCase):
+    def test_late_shipments_are_unlinked_and_the_detail_is_bounded(self):
+        review = MarketplaceReview(
+            review_id="R0", listing_sku="SKU-X", posted_on=date(2026, 11, 10), rating=1,
+            brand="Brand-X", body="The device stopped working", trace_ref="TR-X",
+        )
+        late_shipment = ShipmentTrace(
+            trace_ref="TR-X", sku="SKU-X", lot="LOT-X", supplier="Supplier-X", released_on=date(2026, 11, 11),
+        )
+        rows = tuple(review.model_copy(update={"review_id": f"R{i}"}) for i in range(TRACE_REJECTION_LIMIT + 1))
+        traced = normalize_reviews((*rows, review.model_copy(update={"review_id": "R5star", "rating": 5})), (late_shipment,))
+        self.assertEqual(traced.summary["conflict"], len(rows))
+        self.assertEqual(len(traced.rejections), TRACE_REJECTION_LIMIT)
+        self.assertEqual({row.reason for row in traced.rejections}, {"shipment_after_review"})
+        self.assertFalse(traced.attribution)
+        self.assertTrue(all(row.lot == UNMAPPED and row.supplier == UNMAPPED for row in traced.reviews))
 
 
 class StoreRecoveryTests(unittest.TestCase):

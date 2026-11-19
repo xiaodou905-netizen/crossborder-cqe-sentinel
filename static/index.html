@@ -57,6 +57,10 @@
           <a id="snapshot-link" class="source-link" target="_blank" rel="noopener" hidden>快照 JSON ↗</a>
         </div>
         <p id="trace-summary" class="trace-summary" hidden></p>
+        <details id="trace-rejections" class="trace-rejections" hidden>
+          <summary></summary>
+          <ul aria-label="未关联出货批次的差评"></ul>
+        </details>
       </section>
 
       <section class="panel listing-panel" aria-labelledby="listing-heading">
@@ -216,6 +220,7 @@
         <strong data-field="share"></strong>
         <span data-field="comparison"></span>
       </div>
+      <div data-field="evidence-summary" class="signal-evidence" hidden></div>
     </a>
   </template>
 

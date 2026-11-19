@@ -20,4 +20,8 @@ if [[ ! -x .venv/bin/python ]]; then
 fi
 
 .venv/bin/python -m pip install --quiet --disable-pip-version-check -r requirements.txt
+if [[ ${1:-} == --verify-demo ]]; then
+  shift
+  exec .venv/bin/python -m benchmarks.smoke_http --standalone "$@"
+fi
 exec .venv/bin/python app.py "$@"

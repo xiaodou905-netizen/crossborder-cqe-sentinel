@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
 from adapters.contracts import Inspection, MarketplaceReview, ShipmentTrace
 from adapters.http_feeds import content_hash
@@ -10,6 +11,15 @@ from core.tagger import Review
 
 
 UNMAPPED = "未标注"
+TRACE_REJECTION_LIMIT = 8
+
+
+@dataclass(frozen=True)
+class TraceRejection:
+    review_id: str
+    sku: str
+    trace_ref: str | None
+    reason: Literal["missing_reference", "unknown_reference", "sku_mismatch", "shipment_after_review"]
 
 
 @dataclass(frozen=True)
@@ -17,6 +27,7 @@ class TracedReviews:
     reviews: list[Review]
     attribution: dict[str, str]
     summary: dict[str, int]
+    rejections: list[TraceRejection]
 
 
 def normalize_reviews(
@@ -25,18 +36,23 @@ def normalize_reviews(
     by_ref = {item.trace_ref: item for item in shipments}
     totals = Counter({"linked": 0, "missing": 0, "unmatched": 0, "conflict": 0})
     reviews, links = [], {}
+    rejections = []
     for item in raw:
         trace = by_ref.get(item.trace_ref)
         if item.trace_ref is None:
-            status = "missing"
+            status, reason = "missing", "missing_reference"
         elif trace is None:
-            status = "unmatched"
-        elif trace.sku != item.listing_sku or trace.released_on > item.posted_on:
-            status = "conflict"
+            status, reason = "unmatched", "unknown_reference"
+        elif trace.sku != item.listing_sku:
+            status, reason = "conflict", "sku_mismatch"
+        elif trace.released_on > item.posted_on:
+            status, reason = "conflict", "shipment_after_review"
         else:
-            status = "linked"
+            status, reason = "linked", None
         if item.rating <= 2:
             totals[status] += 1
+            if reason is not None and len(rejections) < TRACE_REJECTION_LIMIT:
+                rejections.append(TraceRejection(item.review_id, item.listing_sku, item.trace_ref, reason))
         if status != "linked":
             trace = None
         if trace is not None:
@@ -46,7 +62,7 @@ def normalize_reviews(
             sku=item.listing_sku, stars=item.rating, review_text=item.body,
             supplier=trace.supplier if trace else UNMAPPED, lot=trace.lot if trace else UNMAPPED,
         ))
-    return TracedReviews(reviews, links, dict(totals))
+    return TracedReviews(reviews, links, dict(totals), rejections)
 
 
 def attach_quality_evidence(report: dict, traced: TracedReviews, inspections: tuple[Inspection, ...]) -> None:
