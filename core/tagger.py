@@ -90,13 +90,7 @@ class Review(BaseModel):
     supplier: Identifier
     lot: Identifier
     stars: int = Field(ge=1, le=5)
-    review_text: str = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def require_review_text(self) -> Self:
-        if not self.review_text.strip():
-            raise ValueError("review_text must contain review content")
-        return self
+    review_text: str
 
 
 class Tag(BaseModel):
@@ -239,8 +233,10 @@ def classify_compatible(
 def tag_reviews(reviews: list[Review], demo_mode: bool) -> list[TaggedReview]:
     if demo_mode:
         return [TaggedReview(row, classify_demo(row.review_text)) for row in reviews]
-    if not reviews:
-        return []
+    with_text = [row for row in reviews if row.review_text.strip()]
+    unclassified = Tag(category=None, issue=None, keywords=[])
+    if not with_text:
+        return [TaggedReview(row, unclassified) for row in reviews]
 
     key = os.getenv("OPENAI_API_KEY", "").strip()
     model = os.getenv("OPENAI_MODEL", "").strip()
@@ -260,4 +256,6 @@ def tag_reviews(reviews: list[Review], demo_mode: bool) -> list[TaggedReview]:
         headers={"Authorization": f"Bearer {key}"},
         timeout=httpx.Timeout(60.0, connect=10.0),
     ) as client:
-        return classify_compatible(reviews, client, model, env_flag("OPENAI_JSON_MODE", default=True))
+        tagged = classify_compatible(with_text, client, model, env_flag("OPENAI_JSON_MODE", default=True))
+    tags = {item.review.review_id: item.tag for item in tagged}
+    return [TaggedReview(row, tags.get(row.review_id, unclassified)) for row in reviews]

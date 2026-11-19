@@ -20,7 +20,10 @@
           <p class="product-name">Crossborder CQE Sentinel</p>
         </div>
       </div>
-      <button id="preview-button" class="preview-button" type="button" disabled>预览飞书告警 <span aria-hidden="true">↗</span></button>
+      <div class="header-actions flex flex-wrap items-center gap-2">
+        <button id="preview-button" class="preview-button" type="button" disabled>预览飞书告警 <span aria-hidden="true">↗</span></button>
+        <button id="import-button" class="preview-button data-button" type="button" disabled><span aria-hidden="true">+</span> 导入 CSV / 模拟实时抓取</button>
+      </div>
     </div>
   </header>
 
@@ -33,6 +36,20 @@
         <div id="sample-period"></div>
         <div id="mode-label" class="mode-label"></div>
       </div>
+      <p id="update-notice" class="update-notice" role="status" hidden></p>
+
+      <section class="panel listing-panel" aria-labelledby="listing-heading">
+        <div class="panel-heading flex flex-wrap items-start justify-between gap-2">
+          <h2 id="listing-heading">Listing 星级影响与整改收益评估</h2>
+          <p id="listing-scope" class="listing-scope"></p>
+        </div>
+        <ul id="listing-items" class="listing-items" aria-label="各 SKU 星级"></ul>
+        <p id="listing-empty" class="empty-line" hidden>该时点暂无评分样本。</p>
+        <details class="listing-method">
+          <summary>估算口径</summary>
+          <p id="listing-method-copy"></p>
+        </details>
+      </section>
 
       <section id="signal-section" class="signal-panel" aria-labelledby="signal-heading">
         <div class="signal-header flex flex-wrap items-center justify-between gap-3">
@@ -68,7 +85,7 @@
           <div class="panel-heading flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 id="ranking-heading">重灾区排行</h2>
-              <p>差评条数及全样本占比</p>
+              <p id="ranking-caption">差评条数及全样本占比</p>
             </div>
             <div class="segmented inline-flex" role="group" aria-label="排行维度">
               <button type="button" data-rank="supplier" aria-pressed="true">供应商</button>
@@ -102,6 +119,33 @@
     </div>
   </main>
 
+  <dialog id="import-dialog" aria-labelledby="import-heading">
+    <div class="dialog-heading flex items-start justify-between gap-4">
+      <div><h2 id="import-heading">差评数据导入与实时抓取</h2></div>
+      <form method="dialog"><button id="close-import" class="close-button" aria-label="关闭导入窗口" autofocus>×</button></form>
+    </div>
+    <form id="csv-form" class="data-form">
+      <label for="review-csv">电商评论 CSV</label>
+      <input id="review-csv" name="reviews" type="file" accept=".csv,text/csv" required aria-describedby="csv-help">
+      <p id="csv-help">UTF-8 CSV，最大 5 MiB。支持全星级导出和仅差评文件。</p>
+      <label class="rating-coverage">
+        <input id="full-ratings" type="checkbox">
+        <span>包含所选期间的全星级评价</span>
+      </label>
+      <p id="import-mode"></p>
+      <button id="import-submit" class="action-primary" type="submit">导入并分析</button>
+    </form>
+    <section class="simulation-section" aria-labelledby="simulation-heading">
+      <h3 id="simulation-heading">模拟实时抓取</h3>
+      <p>向示例数据追加 5 条内衬压碎评论，并切换到示例看板。</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="simulate-button" class="action-outline" type="button">一键模拟新增 5 条包装破损差评</button>
+        <button id="restore-import" class="action-link" type="button" hidden>返回上次导入结果</button>
+      </div>
+    </section>
+    <p id="import-status" class="import-status" role="status" hidden></p>
+  </dialog>
+
   <dialog id="preview-dialog" aria-labelledby="dialog-heading">
     <div class="dialog-heading flex items-start justify-between gap-4">
       <div>
@@ -125,6 +169,20 @@
       </details>
     </div>
   </dialog>
+
+  <template id="listing-template">
+    <li class="listing-item">
+      <div class="listing-item-heading flex flex-wrap items-baseline justify-between gap-x-2">
+        <strong data-field="sku"></strong>
+        <span data-field="rating-count"></span>
+      </div>
+      <dl class="listing-values">
+        <div><dt>当前加权星级</dt><dd data-field="current" class="tabular-nums"></dd></div>
+        <div><dt>30 天预计挽回</dt><dd data-field="lift" class="listing-lift tabular-nums"></dd></div>
+      </dl>
+      <p class="listing-context" data-field="context"></p>
+    </li>
+  </template>
 
   <template id="signal-template">
     <a class="signal-link">

@@ -8,6 +8,13 @@ const colors = {
   物流损坏: "#2c8074",
   待复核: "#7a8796",
 };
+const canChart = typeof Chart !== "undefined";
+const rankButtons = document.querySelectorAll("[data-rank]");
+let currentReport;
+let categoryChart;
+let rankingChart;
+let rankingDimension = "supplier";
+let updateInProgress = false;
 
 function element(tag, value, className) {
   const node = document.createElement(tag);
@@ -26,13 +33,18 @@ function fill(root, fields) {
   }
 }
 
-async function fetchJSON(path) {
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+async function fetchJSON(path, options) {
+  const response = await fetch(path, {cache: "no-store", ...options}).catch(() => {
+    throw new Error("无法连接本地分析服务。");
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(typeof error?.detail === "string" ? error.detail : `请求失败（HTTP ${response.status}）。`);
+  }
   return response.json();
 }
 
-function renderSignal(alert, index) {
+function renderSignal(alert, index, expanded) {
   const banner = template("#signal-template");
   const details = template("#case-template");
   const isHigh = alert.level === "重点预警";
@@ -40,6 +52,8 @@ function renderSignal(alert, index) {
   const lots = Object.entries(alert.lots).map(([lot, count]) => `${lot}（${count} 条）`).join("、");
 
   details.id = `case-${index + 1}`;
+  details.dataset.signalKey = JSON.stringify([alert.sku, alert.supplier, alert.title]);
+  details.open = expanded.has(details.dataset.signalKey);
   banner.href = `#${details.id}`;
   $("[data-field=level]", banner).dataset.level = isHigh ? "high" : "early";
   details.dataset.level = isHigh ? "high" : "early";
@@ -91,26 +105,65 @@ function renderSignal(alert, index) {
   $("#case-list").append(details);
 }
 
-function renderAlerts(report) {
+function renderAlerts(report, preserveExpanded) {
   const {alerts, windows} = report;
+  const expanded = new Set(preserveExpanded
+    ? Array.from(document.querySelectorAll(".case-card[open]"), (card) => card.dataset.signalKey)
+    : []);
+  $("#signal-list").replaceChildren();
+  $("#case-list").replaceChildren();
+  $("#signal-section").dataset.clear = String(!alerts.length);
   $("#signal-count").textContent = `${alerts.length} 条`;
   $("#observation-window").textContent = `近 7 天  ${windows.recent.start} 至 ${windows.recent.end}`;
   $("#comparison-range").textContent = `28 天基线  ${windows.baseline.start} 至 ${windows.baseline.end}`;
   if (!alerts.length) {
-    $("#signal-section").dataset.clear = "true";
     $("#signal-list").append(element("p", "当前窗口无达到阈值的客诉信号。", "empty-line"));
     $("#case-list").append(element("p", "有新预警时，这里会显示可参考的历史案例。", "empty-line"));
   }
-  alerts.forEach(renderSignal);
+  alerts.forEach((alert, index) => renderSignal(alert, index, expanded));
 }
 
-function renderDistribution(report, canChart) {
+function renderListings(report) {
+  const {listings, rating_scope: scope, listing_scenario: scenario} = report;
+  const scopeLabels = {
+    demo: "合成全星级 · 情景估算",
+    full: "导入全星级 · 情景估算",
+    partial: "全星级数据待补",
+  };
+  $("#listing-scope").textContent = scopeLabels[scope];
+  $("#listing-method-copy").textContent = scope === "partial"
+    ? "导入所选期间的全部星级评价后可计算星级。当前文件仍可用于差评归因。"
+    : `当前星级按各星级的评价条数加权。${scenario.days} 天挽回以未整改情景为基准，按近 7 天评价量和构成外推，假设匹配到 8D 的失效有 ${Math.round(scenario.recovery_share * 100)}% 的后续低星评价改善为 ${scenario.recovered_rating}★。`;
+  $("#listing-empty").hidden = Boolean(listings.length);
+  const items = document.createDocumentFragment();
+  for (const item of listings) {
+    const row = template("#listing-template");
+    const hasStars = item.current_stars !== null;
+    const hasLift = item.lift_stars !== null;
+    let context = "暂无关联 8D 的预警";
+    if (!hasStars) context = "导入全星级后可评估";
+    if (hasLift) context = `30 天情景 ${item.without_8d_stars.toFixed(2)} → ${item.with_8d_stars.toFixed(2)}★`;
+    fill(row, {
+      sku: item.sku,
+      "rating-count": `${item.rating_count} 条评分`,
+      current: hasStars ? `${item.current_stars.toFixed(1)}★` : "—",
+      lift: hasLift ? `+${item.lift_stars.toFixed(1)}★` : "—",
+      context,
+    });
+    $("[data-field=current]", row).dataset.empty = String(!hasStars);
+    $("[data-field=lift]", row).dataset.empty = String(!hasLift);
+    items.append(row);
+  }
+  $("#listing-items").replaceChildren(items);
+}
+
+function renderDistribution(report) {
   const classified = report.total_reviews - report.unclassified_reviews;
   $("#classified-total").textContent = classified;
-  if (report.unclassified_reviews) {
-    $("#classification-note").textContent += `，${report.unclassified_reviews} 条待复核`;
-  }
+  const pending = report.unclassified_reviews ? `，${report.unclassified_reviews} 条待复核` : "";
+  $("#classification-note").textContent = `已归类差评按主问题统计${pending}`;
   const list = $("#category-legend");
+  list.replaceChildren();
   for (const row of report.categories) {
     const item = document.createElement("li");
     const dot = element("span", "", "legend-dot");
@@ -128,17 +181,24 @@ function renderDistribution(report, canChart) {
     $(".distribution").classList.add("grid-cols-1");
     return;
   }
-  new Chart($("#category-chart"), {
+  const data = {
+    labels: classified ? report.categories.map(({category}) => category) : ["暂无数据"],
+    datasets: [{
+      data: classified ? report.categories.map(({count}) => count) : [1],
+      backgroundColor: classified ? report.categories.map(({category}) => colors[category]) : ["#e3eaf1"],
+      borderColor: "#fff",
+      borderWidth: classified ? 3 : 0,
+    }],
+  };
+  if (categoryChart) {
+    categoryChart.data = data;
+    categoryChart.options.plugins.tooltip.enabled = Boolean(classified);
+    categoryChart.update();
+    return;
+  }
+  categoryChart = new Chart($("#category-chart"), {
     type: "doughnut",
-    data: {
-      labels: classified ? report.categories.map(({category}) => category) : ["暂无数据"],
-      datasets: [{
-        data: classified ? report.categories.map(({count}) => count) : [1],
-        backgroundColor: classified ? report.categories.map(({category}) => colors[category]) : ["#e3eaf1"],
-        borderColor: "#fff",
-        borderWidth: classified ? 3 : 0,
-      }],
-    },
+    data,
     options: {
       maintainAspectRatio: false,
       animation: false,
@@ -148,78 +208,75 @@ function renderDistribution(report, canChart) {
   });
 }
 
-function renderRankings(report, canChart) {
+function renderRankings(report) {
   const display = $("#rank-display");
   const list = $("#ranking-values");
-  const buttons = document.querySelectorAll("[data-rank]");
+  const groups = report.rankings[rankingDimension];
+  const rows = groups.slice(0, 10);
+  for (const button of rankButtons) button.setAttribute("aria-pressed", button.dataset.rank === rankingDimension);
+  $("#ranking-caption").textContent = groups.length > rows.length
+    ? `前 ${rows.length} 名 · 差评条数及全样本占比`
+    : "差评条数及全样本占比";
+  list.replaceChildren();
+  display.hidden = !rows.length;
+  $("#rank-empty").hidden = Boolean(rows.length);
+  if (!rows.length) return;
+  display.style.setProperty("--rank-height", `${Math.max(154, 36 * rows.length)}px`);
+
+  for (const row of rows) {
+    const item = document.createElement("li");
+    item.append(
+      element("span", row.name, "rank-name"),
+      element("strong", `${row.count} 条`),
+      element("span", percentage(row.share), "rank-share"),
+    );
+    list.append(item);
+  }
   if (!canChart) {
     display.dataset.textOnly = "true";
     $("#chart-status").textContent = "图表组件加载失败，已显示排行数值。";
     $("#chart-status").hidden = false;
+    return;
   }
-  let chart;
 
-  function select(dimension) {
-    for (const button of buttons) button.setAttribute("aria-pressed", button.dataset.rank === dimension);
-    const rows = report.rankings[dimension];
-    list.replaceChildren();
-    display.hidden = !rows.length;
-    $("#rank-empty").hidden = Boolean(rows.length);
-    if (!rows.length) return;
-    display.style.setProperty("--rank-height", `${Math.max(154, 36 * rows.length)}px`);
+  const categories = report.categories.map(({category}) => category);
+  if (rows.some(({unclassified}) => unclassified)) categories.push("待复核");
+  const labels = rows.map(({name}) => name);
+  const datasets = categories.map((category) => ({
+    label: category,
+    data: rows.map((row) => category === "待复核" ? row.unclassified : row.by_category[category]),
+    backgroundColor: colors[category],
+    borderWidth: 1,
+    borderColor: "#fff",
+    maxBarThickness: 18,
+  }));
 
-    for (const row of rows) {
-      const item = document.createElement("li");
-      item.append(
-        element("span", row.name, "rank-name"),
-        element("strong", `${row.count} 条`),
-        element("span", percentage(row.share), "rank-share"),
-      );
-      list.append(item);
-    }
-    if (!canChart) return;
-
-    const categories = report.categories.map(({category}) => category);
-    if (rows.some(({unclassified}) => unclassified)) categories.push("待复核");
-    const labels = rows.map(({name}) => name);
-    const datasets = categories.map((category) => ({
-      label: category,
-      data: rows.map((row) => category === "待复核" ? row.unclassified : row.by_category[category]),
-      backgroundColor: colors[category],
-      borderWidth: 1,
-      borderColor: "#fff",
-      maxBarThickness: 18,
-    }));
-
-    if (chart) {
-      chart.data = {labels, datasets};
-      chart.update();
-      return;
-    }
-    chart = new Chart($("#ranking-chart"), {
-      type: "bar",
-      data: {labels, datasets},
-      options: {
-        indexAxis: "y",
-        maintainAspectRatio: false,
-        animation: false,
-        layout: {padding: {top: 3, bottom: 3}},
-        scales: {
-          x: {stacked: true, display: false, beginAtZero: true},
-          y: {
-            stacked: true,
-            grid: {display: false},
-            border: {display: false},
-            ticks: {autoSkip: false, color: "#263b50", font: {family: "system-ui, sans-serif", weight: 600}},
-          },
+  if (rankingChart) {
+    rankingChart.data = {labels, datasets};
+    rankingChart.resize();
+    rankingChart.update();
+    return;
+  }
+  rankingChart = new Chart($("#ranking-chart"), {
+    type: "bar",
+    data: {labels, datasets},
+    options: {
+      indexAxis: "y",
+      maintainAspectRatio: false,
+      animation: false,
+      layout: {padding: {top: 3, bottom: 3}},
+      scales: {
+        x: {stacked: true, display: false, beginAtZero: true},
+        y: {
+          stacked: true,
+          grid: {display: false},
+          border: {display: false},
+          ticks: {autoSkip: false, color: "#263b50", font: {family: "system-ui, sans-serif", weight: 600}},
         },
-        plugins: {legend: {display: false}},
       },
-    });
-  }
-
-  for (const button of buttons) button.addEventListener("click", () => select(button.dataset.rank));
-  select("supplier");
+      plugins: {legend: {display: false}},
+    },
+  });
 }
 
 async function showPreview() {
@@ -252,22 +309,107 @@ async function showPreview() {
   }
 }
 
+function renderDashboard(report) {
+  const period = report.sample_start ? `${report.sample_start} 至 ${report.as_of}` : `截至 ${report.as_of}`;
+  $("#sample-period").textContent = `样本期间  ${period}  ·  ${report.total_reviews} 条差评`;
+  const imported = report.data_source === "import";
+  const modeLabel = report.demo_mode ? "本地规则" : "兼容 API";
+  let dataLabel = imported ? `CSV 导入 · ${modeLabel}` : "合成数据 · " + (report.demo_mode ? "无密钥演示" : modeLabel);
+  if (report.simulated_reviews) dataLabel = `合成数据 · 已追加 ${report.simulated_reviews} 条模拟差评`;
+  $("#mode-label").textContent = dataLabel;
+  $("#restore-import").hidden = imported || !report.has_import;
+  $("#import-mode").textContent = report.demo_mode
+    ? "当前使用本地规则进行分析。"
+    : "当前使用兼容 API，有正文的低星评价及其编号会传给已配置的模型服务。";
+  renderListings(report);
+  renderAlerts(report, currentReport?.data_source === report.data_source);
+  $("#report").hidden = false;
+  renderDistribution(report);
+  renderRankings(report);
+  currentReport = report;
+}
+
+function setImportStatus(text, error = false) {
+  const status = $("#import-status");
+  status.hidden = !text;
+  status.dataset.error = String(error);
+  status.textContent = text;
+}
+
+async function updateData(path, options, pending, success) {
+  if (updateInProgress) return false;
+  updateInProgress = true;
+  const dialog = $("#import-dialog");
+  const controls = dialog.querySelectorAll("button, input");
+  for (const control of controls) control.disabled = true;
+  setImportStatus(pending);
+  try {
+    const report = await fetchJSON(path, {method: "POST", ...options});
+    renderDashboard(report);
+    const notice = $("#update-notice");
+    notice.hidden = false;
+    notice.textContent = success(report);
+    dialog.close();
+    return true;
+  } catch (error) {
+    setImportStatus(error.message, true);
+    return false;
+  } finally {
+    for (const control of controls) control.disabled = false;
+    updateInProgress = false;
+  }
+}
+
+function bindControls() {
+  for (const button of rankButtons) {
+    button.addEventListener("click", () => {
+      rankingDimension = button.dataset.rank;
+      renderRankings(currentReport);
+    });
+  }
+  $("#preview-button").addEventListener("click", showPreview);
+  const importDialog = $("#import-dialog");
+  importDialog.addEventListener("cancel", (event) => {
+    if (updateInProgress) event.preventDefault();
+  });
+  $("#import-button").addEventListener("click", () => {
+    setImportStatus("");
+    importDialog.showModal();
+  });
+  $("#csv-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const [file] = $("#review-csv").files;
+    if (!file || !file.name.toLowerCase().endsWith(".csv")) {
+      setImportStatus("请选择 .csv 文件。", true);
+      return;
+    }
+    const checked = $("#full-ratings").checked;
+    const imported = await updateData(
+      `/api/import?full_ratings=${checked}`,
+      {headers: {"Content-Type": "text/csv"}, body: file},
+      "正在导入并重新分析…",
+      (report) => `已导入 ${report.input_rows} 条评价，其中 ${report.total_reviews} 条差评。`,
+    );
+    if (imported) event.target.reset();
+  });
+  $("#simulate-button").addEventListener("click", () => updateData(
+    "/api/demo-simulate", {}, "正在模拟抓取并重新分析…",
+    (report) => `本次新增 5 条包装破损差评，示例样本现有 ${report.total_reviews} 条差评。`,
+  ));
+  $("#restore-import").addEventListener("click", () => updateData(
+    "/api/restore-import", {}, "正在恢复导入结果…",
+    (report) => `已返回上次导入结果，共 ${report.total_reviews} 条差评。`,
+  ));
+}
+
 async function loadDashboard() {
   const state = $("#page-status");
   try {
-    const report = await fetchJSON("/api/report");
-    const period = report.sample_start ? `${report.sample_start} 至 ${report.as_of}` : `截至 ${report.as_of}`;
-    $("#sample-period").textContent = `样本期间  ${period}  ·  ${report.total_reviews} 条差评`;
-    $("#mode-label").textContent = report.demo_mode ? "合成数据 · 无密钥演示" : "合成数据 · 兼容 API";
-    renderAlerts(report);
-    $("#report").hidden = false;
+    renderDashboard(await fetchJSON("/api/report"));
+    bindControls();
+    $("#preview-button").disabled = false;
+    $("#import-button").disabled = false;
     state.hidden = true;
-    const canChart = typeof Chart !== "undefined";
-    renderDistribution(report, canChart);
-    renderRankings(report, canChart);
-    const button = $("#preview-button");
-    button.disabled = false;
-    button.addEventListener("click", showPreview);
   } catch (error) {
     console.error(error);
     state.textContent = "看板加载失败。确认本地服务已启动后，刷新页面重试。";

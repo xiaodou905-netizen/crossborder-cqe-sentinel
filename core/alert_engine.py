@@ -58,6 +58,7 @@ class Signal:
     level: Level
     recent: WindowMetric
     baseline: WindowMetric
+    recent_rating_points: int
     change_pp: float
     lots: dict[str, int]
     keywords: list[str]
@@ -158,6 +159,7 @@ def evaluate_signals(rows: list[TaggedReview], as_of: date) -> list[Signal]:
                 level=level,
                 recent=WindowMetric(count, len(recent), percentage(count, len(recent)), round(float(rate), 2)),
                 baseline=WindowMetric(prior_count, len(baseline), percentage(prior_count, len(baseline)), round(float(prior_rate), 2)),
+                recent_rating_points=sum(item.review.stars for item in matches),
                 change_pp=round(float(change_pp), 1),
                 lots=dict(Counter(item.review.lot for item in ordered).most_common()),
                 keywords=[term for term, _ in keywords.most_common(6)],
