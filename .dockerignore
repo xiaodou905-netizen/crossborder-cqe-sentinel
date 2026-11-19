@@ -2,9 +2,15 @@
 .github
 .venv
 .sentinel
+.wrangler
 node_modules
 __pycache__
 **/__pycache__
+.pytest_cache
+.DS_Store
 .env
 .env.*
 *.log
+cloudflare/.build-*
+cloudflare/dist
+cloudflare/generated.json

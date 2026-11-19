@@ -2,22 +2,24 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Cloudflare-F38020?logo=cloudflare&logoColor=white)](https://crossborder-cqe-sentinel.xtony.workers.dev/)
 
-**面向智能硬件、IoT 与智能制造的 CQE / SQE / DQE 质量参考架构。**
+**面向智能硬件的 CQE 工作台，从海外电商差评预警追到出货批次与现场检验。**
 
-从海外客诉追到出货批次，再用现场检验判断是否具备复验条件。工作台用可回查的同步快照串起渠道评价、出货追溯和 QMS 检验，附历史 8D 与 Listing 星级情景。
+将海外电商 VOC 与 MES 出货追溯、QMS 检验对齐，为 CQE / SQE / DQE 提供研判证据与历史 8D 建议。工程师按同批次复现证据移交复验，并用 Listing 星级情景评估整改优先级。
 
-[公网体验（无需 API Key）](https://crossborder-cqe-sentinel.xtony.workers.dev/) · [本地运行与验收](#本地运行与验收) · [在线演示部署](#在线演示部署) · [数据接入契约](docs/integration.md) · [可复跑评测](docs/evaluation.md) · [面试与设计问答](docs/interview.md)
+[打开合成演示（无需 API Key）](https://crossborder-cqe-sentinel.xtony.workers.dev/) · [本地一键启动](#本地运行与验收) · [查看评测](docs/evaluation.md)
 
-| 已在本地运行的证据 | 结果 |
+[![合成数据工作台，展示三源同步、Listing 星级情景和批次预警](docs/dashboard.jpg)](https://crossborder-cqe-sentinel.xtony.workers.dev/)
+
+## 演示验收结果
+
+| 合成沙盒验收 | 结果 |
 | --- | --- |
 | 三源 HTTP 分页回放 | **408 条评分、13 条追溯、4 条检验**。80 条差评中 **77 条**关联批次 |
 | 同批次质量证据 | 包装压溃 `LOT-PU-04`，`QMS-26-117` 角跌后 **3/6 件异常，已复现**。低温指纹 `LOT-ME-03`，`QMS-26-123` **1/5 件异常，检验观察**。[QMS 样例](data/demo_qms_inspections.json) |
 | 异常恢复 | 追溯源 503，重试两次后本轮失败，上一成功快照继续可读 |
 | VOC 与检索基准 | **89.8% Macro-F1**（58 条）。8D **Recall@3 / MRR@3 均为 1.000**（11 条有标签的检索题，库内 5 案例） |
 
-仓库使用脱敏合成数据。已验证同进程 demo 的实际 HTTP 请求，也用三个独立本地进程作为配置化上游完成联调。接入契约和业务样例可在本机复跑。
-
-![CQE 多源质量证据工作台](docs/dashboard.jpg)
+同进程合成上游及三个独立进程的配置化联调均已通过。开发者可核对 [数据接入契约](docs/integration.md)，也可按 [面试演示路径](docs/interview.md) 查看每一项证据。
 
 ## 它解决什么
 
@@ -30,42 +32,63 @@
 
 ## 本地运行与验收
 
-需要 Python 3.11+。在仓库根目录启动后打开 [CQE 工作台](http://127.0.0.1:8001/)。首次安装 Python 依赖需要网络，前端资源随仓库提供。
+需要 Python 3.11+。在仓库根目录执行对应命令，再打开 [CQE 工作台](http://127.0.0.1:8001/)。首次安装依赖需要网络，前端资源随仓库提供。若 8001 已被占用，可设置环境变量 `PORT` 并用对应端口打开工作台。
+
+**macOS / Linux**
 
 ```bash
 ./start.sh
 ```
 
-下面的命令会启动隔离沙盒并在验收后退出。它使用动态 loopback 端口和内存 SQLite，输出三源条数、两条告警的 QMS 记录和故障后快照回读结果。
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
+
+</details>
+
+### 从一条差评追到批次证据
+
+本地和公网演示均可沿以下路径查看证据。
+
+1. 点 **同步三源**，再点 **查看 3 条未关联差评**，核对原记录和未关联原因。打开 **快照 JSON** 可核对输入 SHA-256。
+2. 展开 **包装内衬压碎**，沿评论原句查看 `TR-LOT-PU-04`、`QMS-26-117` 和历史案例 `8D-002`。填写备注并开始调查，有同批次复现证据时可提交复验。
+3. 点 **回放来源故障**，查看追溯源重试、失败状态与保留的成功快照。通过 **导入 CSV / 模拟实时抓取** 追加 5 条包装破损差评，观察预警与排行变化。
+
+### 命令行验收
+
+验收使用随机本机端口和内存 SQLite，输出三源条数、两条告警的 QMS 证据及故障后快照回读结果。
 
 ```bash
 ./start.sh --verify-demo
 ```
 
-Windows PowerShell 先运行 `py -3 -m venv .venv` 和 `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`。工作台入口为 `.\.venv\Scripts\python.exe app.py`，验收入口为 `.\.venv\Scripts\python.exe -m benchmarks.smoke_http --standalone`。
-
-1. 在 [CQE 工作台](http://127.0.0.1:8001/) 点 **同步三源**。打开 **查看 3 条未关联差评**，可定位原记录和原因。打开 **快照 JSON** 核对输入 SHA-256。
-2. 对照两张告警卡的复现和观察阶段。展开 **包装内衬压碎**，顺着评论原句、`TR-LOT-PU-04`、`QMS-26-117` 到历史案例 `8D-002`。填写备注后可开始调查、提交复验。
-3. 点 **回放来源故障**，查看追溯源重试与失败状态。已生成的快照仍可查看。点 **导入 CSV / 模拟实时抓取** 可测试另一个入口。
+Windows 验收命令为 `.\.venv\Scripts\python.exe -m benchmarks.smoke_http --standalone`。
 
 接口文档可直接打开 [本机 OpenAPI](http://127.0.0.1:8001/docs)。
 
 ## 数据流与状态
 
+下图对应本地 Python 工作台。公网 Workers 使用同一引擎生成的合成回放结果。[在线演示部署](#在线演示部署)
+
 ```mermaid
-flowchart LR
-    M["渠道评分 · 分页快照"] --> A["异步 HTTP Adapter"]
-    S["MES / 出货追溯"] --> A
+flowchart TD
+    M["渠道评分 · VOC"] --> A["异步 HTTP 分页 · Pydantic 校验"]
+    S["MES 出货追溯"] --> A
     Q["QMS 现场检验"] --> A
-    A --> J["合并与校验 trace_ref / SKU / 时间"]
-    J --> T["规则或兼容模型 · 原文跨度校验"]
-    T --> W["7 日与 28 日预警"]
-    W --> K["同类历史 8D · TF-IDF 候选与重排"]
-    W --> E["关联同 SKU / 批次 / 失效的检验"]
+    A --> J["评论与出货批次关联"]
+    J --> W["失效分类 · 7 日对比前 28 日"]
+    W --> K["历史 8D 检索与重排"]
+    W --> E["同批次 · 同失效检验匹配"]
+    A -->|检验记录| E
     K --> P["SQLite 同步快照"]
     E --> P
-    P --> UI["前端 · 飞书预览 · Listing 情景"]
-    P --> H["CQE 研判备注与复验移交"]
+    P --> UI["看板 · 星级情景 · 飞书预览"]
+    P --> H["CQE 调查与复验移交"]
 ```
 
 - **同步状态**从受理、拉取到分析。三源全部通过校验才提交成功快照。请求幂等键复用同一任务，失败与重启中断可以回查。
@@ -104,10 +127,15 @@ flowchart LR
 
 部署构建由 Python 引擎生成合成回放结果。Cloudflare Worker 在运行时逐页核验三源指纹，再发布对应快照。每个访客的操作由 SQLite Durable Object 分开保存，演示会话有效期为 12 小时。部署使用 Workers Free 支持的组件。[Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/) · [Durable Objects 免费层](https://developers.cloudflare.com/durable-objects/platform/pricing/)
 
-在仓库根目录用已登录的 Wrangler 发布。部署命令会调用 `./start.sh --build-cloudflare` 生成静态资源与回放快照。
+从 macOS 或 Linux 部署需要 Python 3.11+、Node.js 和已登录的 Cloudflare 账号。在仓库根目录执行部署命令，Wrangler 会调用 `./start.sh --build-cloudflare` 生成静态资源与回放快照。
 
 ```bash
 npx --yes wrangler@4.165.0 deploy --config wrangler.jsonc
+```
+
+以下命令验收已发布的演示。验收自己的部署时，使用 Wrangler 返回的 URL 作为 `--base`。
+
+```bash
 .venv/bin/python -m benchmarks.smoke_cloudflare --base https://crossborder-cqe-sentinel.xtony.workers.dev
 ```
 
