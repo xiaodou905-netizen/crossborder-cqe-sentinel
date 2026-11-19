@@ -1,0 +1,81 @@
+review_id,date,brand,sku,supplier,lot,stars,review_text
+VOC-001,2026-10-16,Brand-Mock,SL-Air-CA,Supplier-D,LOT-AC-01,2,包装内衬压溃，面板和附件盒直接接触。It was scratched before I could even fit it.
+VOC-002,2026-10-16,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,2,The foam was shifted over the beeper and the crushed liner had torn along its narrow edge.
+VOC-003,2026-10-16,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-01,1,There was a crushed inner tray. The packet of screws had been pressed into the actuator cover.
+VOC-004,2026-10-16,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,The crushed inner tray had let the strike plate slide over the finish. The outer carton looked fine.
+VOC-005,2026-10-17,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,2,The outer carton split behind the label. The metal bracket was bowed in that direction.
+VOC-006,2026-10-17,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,1,There was a punctured shipping carton at handoff and a matching dent in the brass trim.
+VOC-007,2026-10-18,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-01,2,The cold solder joint on the small daughterboard made a dim display until it lost power altogether.
+VOC-008,2026-10-18,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,A local shop photographed a cracked solder joint on the cable socket after power kept cutting out.
+VOC-009,2026-10-19,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,1,The lock wakes by itself on humid mornings even after cleaning and drying the keypad.
+VOC-010,2026-10-19,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,The keypad wakes by itself at night and drains a fresh set of batteries.
+VOC-011,2026-10-20,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,The carrier marked damaged on the delivery slip. One corner of the handle was bent.
+VOC-012,2026-10-21,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,1,I gave this one star because a collapsed insert left the cylinder free to hit the body.
+VOC-013,2026-10-21,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-01,2,I had a punctured shipping carton visible in the drop-off photo and deep scratches underneath.
+VOC-014,2026-10-21,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,Replacing the batteries didn't help. Support found a loose solder joint on the small in-box board.
+VOC-015,2026-10-22,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,1,The replacement cable didn't help. The shop found a cold solder bridge on the connector pin.
+VOC-016,2026-10-23,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,My porch camera shows my parcel was dropped onto the step. The handle had a chip on that same side.
+VOC-017,2026-10-24,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,2,The carrier marked damaged before I signed. The parcel had a deep ding through the end cap.
+VOC-018,2026-10-24,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-01,1,There is a false touch event when nobody is standing by the door. Annoying at night.
+VOC-019,2026-10-24,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,I see phantom touches after a humid evening. Nobody is near the keypad.
+VOC-020,2026-10-25,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,The electrician showed me a cold solder connection under the plug. It goes dark when the cable moves.
+VOC-021,2026-10-26,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,1,Two nights of phantom touches and already a low battery warning. Very distracting.
+VOC-022,2026-10-26,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-01,2,The bag was pinned under a crushed inner tray. The handle rubbed against the keys.
+VOC-023,2026-10-26,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,There are ghost inputs when the door is still. It beeps and lights up without a press.
+VOC-024,2026-10-27,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-01,1,The crushed foam insert was flat under one end of the latch. There wasn't a dent outside the box.
+VOC-025,2026-10-27,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,安装师傅拍到连接器焊点开裂。The unit cuts out as soon as you move the cable.
+VOC-026,2026-10-28,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-01,2,A crushed shipping carton and a scraped faceplate were what I found on opening the delivery.
+VOC-027,2026-10-29,Brand-Mock,SL-Air-CA,Supplier-D,LOT-AC-01,1,The included board had a cracked solder joint under the plug. Moving the wire cuts the power.
+VOC-028,2026-10-29,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,退货前确认连接器虚焊。The module flickers whenever the door is closed.
+VOC-029,2026-10-29,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,2,一个焊点开裂，触碰线束时屏幕会闪。It never completed the install checks.
+VOC-030,2026-10-30,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,1,This gives a false touch alert several times a night. I took the batteries out.
+VOC-031,2026-10-31,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,I got a false touch with the door shut and no movement on the landing.
+VOC-032,2026-10-31,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,A solder crack was visible on the board that came in the bag. It should have been caught before packing.
+VOC-033,2026-11-01,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,1,The punctured shipping carton had a gouge down to the accessory pouch. A fixing plate was scratched.
+VOC-034,2026-11-01,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,2,There are phantom touches in standby and the battery indicator drops a bar.
+VOC-035,2026-11-01,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,The screen wakes by itself after rain. The sound can be heard from upstairs.
+VOC-036,2026-11-02,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,1,The outer carton split at one corner and a piece of trim was poking through.
+VOC-037,2026-11-03,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The unit won't power on with the included batteries or with a second set.
+VOC-038,2026-11-03,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,2,The outer carton split at the end near the hinge. The hinge plate had bent there too.
+VOC-039,2026-11-03,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,1,The plug had a loose solder joint on arrival. Power first came back when I pressed on the lead.
+VOC-040,2026-11-04,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,It won't pair with either of our phones. I followed the reset directions twice.
+VOC-041,2026-11-05,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,内盒破损，配件卡槽松脱。The seals on the outer box were still in one piece.
+VOC-042,2026-11-06,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,1,A loose solder joint near the plug made the replacement reader sporadically lose power.
+VOC-043,2026-11-06,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,2,A collapsed insert was the only visible issue with the box. The front plate had a small chip.
+VOC-044,2026-11-06,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,No activity at the door but the app shows another self-wake. It used a lot of battery in a week.
+VOC-045,2026-11-07,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,1,安装前就看到排线接口虚焊。Moving the lead makes the display flicker.
+VOC-046,2026-11-08,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The courier impact punched a corner into the carton. The mounting plate had a fresh mark at that spot.
+VOC-047,2026-11-08,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,The courier impact left a triangular dent in the delivery box and in the latch plate beneath it.
+VOC-048,2026-11-09,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,1,The service tech confirmed a solder crack on the ribbon connector. The spare worked.
+VOC-049,2026-11-09,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,It keeps rebooting right after setup with no error text. I need a replacement.
+VOC-050,2026-11-10,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The touch panel shows ghost inputs after cooking nearby. It flashes even when I am across the room.
+VOC-051,2026-11-10,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,1,Phantom touches show up during a damp morning and the display won't stay off.
+VOC-052,2026-11-12,Brand-Mock,SL-Air-CA,Supplier-D,LOT-AC-01,2,This thing wakes by itself around midnight. It only stopped when I removed the batteries.
+VOC-053,2026-11-12,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The keypad logged a self-wake every morning before anyone used the entrance.
+VOC-054,2026-11-12,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-02,1,配对流程走了三遍仍然无法配对。Returning it after trying a second phone.
+VOC-055,2026-11-12,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-02,2,There was a cracked solder joint on the power socket. The replacement module worked right away.
+VOC-056,2026-11-13,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The outer box was sealed but the crushed liner left a washer loose next to the screen.
+VOC-057,2026-11-13,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-03,1,The new module had a loose solder joint near the cable. It responded only when held at an angle.
+VOC-058,2026-11-13,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-03,2,A loose solder joint on the adapter explains why the screen blinked during setup.
+VOC-059,2026-11-14,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,Ghost inputs started after sunset. The panel flashed at least six times before I unplugged it.
+VOC-060,2026-11-14,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-03,1,A crushed shipping carton was photographed before it reached my door. The plate inside had a bent tab.
+VOC-061,2026-11-15,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,A cracked solder joint was visible in the return inspection photo. The reader cut out when flexed.
+VOC-062,2026-11-15,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-03,2,It won't pair after the second factory reset. I gave up and used the old lock.
+VOC-063,2026-11-15,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,1,"The lid looked fine, but a crushed inner tray left the lock body resting on the screws."
+VOC-064,2026-11-15,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,2,外箱完整但内衬压碎。The back of the handle had a shiny scuff before installation.
+VOC-065,2026-11-16,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-03,2,The fingerprint reader rejected the same clean finger four times after a freezing night. It worked indoors.
+VOC-066,2026-11-16,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,1,The collapsed insert didn't hold the keypad in place. Its corner rubbed through the inner sleeve.
+VOC-067,2026-11-16,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-03,2,The keypad shows phantom touches with no one outside. We hear the beep through the door.
+VOC-068,2026-11-17,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The carrier marked damaged at the depot. The backplate was bent where the parcel corner had given way.
+VOC-069,2026-11-17,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-03,1,I reported the punctured shipping carton before unboxing. The strike plate had a dent right under the hole.
+VOC-070,2026-11-17,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,2,I returned it after finding a crushed foam insert and an abrasion on the cylinder surround.
+VOC-071,2026-11-17,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,1,The crushed liner was about as flat as cardboard on one side. Outer edges of the box were clean.
+VOC-072,2026-11-18,Brand-Mock,SL-Air-CA,Supplier-D,LOT-AC-02,1,外箱穿孔。The corner of the handle was chipped where the delivery box had been hit.
+VOC-073,2026-11-18,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-03,2,The fingerprint sensor needs several retries in subzero weather. At room temperature it usually works first try.
+VOC-074,2026-11-18,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-02,2,The screen wakes by itself on the porch and the app records the battery drain.
+VOC-075,2026-11-18,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,1,珍珠棉塌陷，锁体撞到内盒侧面。Outside of the retail carton looked new.
+VOC-076,2026-11-18,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-03,2,We counted four false touch notifications overnight while the door was unused.
+VOC-077,2026-11-19,Brand-Mock,SL-Max-EU,Supplier-B,LOT-ME-03,2,零下时指纹识别要按三四次，进屋回温后恢复。Cold mornings are a problem for fingerprint unlock.
+VOC-078,2026-11-19,Brand-Mock,SL-Mini-UK,Supplier-C,LOT-MU-03,1,Returned because the crushed foam insert let the two painted parts rub together.
+VOC-079,2026-11-19,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,1,A crushed inner tray wedged the handle against the wall of the box. The surface had a fresh chip.
+VOC-080,2026-11-19,Brand-Mock,SL-Pro-US,Supplier-A,LOT-PU-04,2,The inner tray crushed under the knob. The outer carton arrived square and had no marks.

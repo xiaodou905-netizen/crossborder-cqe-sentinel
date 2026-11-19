@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142b41">
+  <title>海外 VOC 质量预警 | Crossborder CQE Sentinel</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/assets/dashboard.css">
+  <script src="/assets/vendor/chart.umd.min.js" defer></script>
+  <script src="/assets/dashboard.js" defer></script>
+</head>
+<body class="min-h-screen">
+  <header class="topbar">
+    <div class="frame flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      <div class="flex items-center gap-3.5">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <h1>海外 VOC 质量预警</h1>
+          <p class="product-name">Crossborder CQE Sentinel</p>
+        </div>
+      </div>
+      <button id="preview-button" class="preview-button" type="button" disabled>预览飞书告警 <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+
+  <main class="frame">
+    <p id="page-status" class="page-status" role="status">正在读取分析结果…</p>
+    <noscript><p class="page-status">启用 JavaScript 后即可查看质量看板。</p></noscript>
+
+    <div id="report" hidden>
+      <div class="scope flex flex-wrap items-center justify-between gap-2">
+        <div id="sample-period"></div>
+        <div id="mode-label" class="mode-label"></div>
+      </div>
+
+      <section id="signal-section" class="signal-panel" aria-labelledby="signal-heading">
+        <div class="signal-header flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="signal-mark" aria-hidden="true">!</span>
+            <h2 id="signal-heading">苗头性客诉预警</h2>
+            <span id="signal-count" class="signal-count tabular-nums"></span>
+          </div>
+          <p id="observation-window" class="observation-window"></p>
+        </div>
+        <div id="signal-list" class="signal-list grid gap-3"></div>
+      </section>
+
+      <div class="chart-grid grid gap-4">
+        <section class="panel" aria-labelledby="category-heading">
+          <div class="panel-heading">
+            <h2 id="category-heading">问题分布</h2>
+            <p id="classification-note">已归类差评按主问题统计</p>
+          </div>
+          <div class="distribution">
+            <div class="donut" aria-hidden="true">
+              <canvas id="category-chart"></canvas>
+              <div class="donut-label">
+                <strong id="classified-total" class="tabular-nums"></strong>
+                <span>已归类差评</span>
+              </div>
+            </div>
+            <ul id="category-legend" class="category-legend" aria-label="分类条数及占比"></ul>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="ranking-heading">
+          <div class="panel-heading flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="ranking-heading">重灾区排行</h2>
+              <p>差评条数及全样本占比</p>
+            </div>
+            <div class="segmented inline-flex" role="group" aria-label="排行维度">
+              <button type="button" data-rank="supplier" aria-pressed="true">供应商</button>
+              <button type="button" data-rank="sku" aria-pressed="false">SKU</button>
+            </div>
+          </div>
+          <div id="rank-display" class="rank-display" style="--rank-height: 158px">
+            <div class="rank-chart" aria-hidden="true"><canvas id="ranking-chart"></canvas></div>
+            <ol id="ranking-values" class="ranking-values" aria-live="polite"></ol>
+          </div>
+          <p id="rank-empty" class="empty-line" hidden>该时点暂无可分析的差评。</p>
+          <p id="chart-status" class="empty-line" hidden></p>
+        </section>
+      </div>
+
+      <section class="panel investigation" aria-labelledby="case-heading">
+        <div class="panel-heading flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="case-heading">AI 推荐历史 8D 整改方案</h2>
+            <p>展开查看评论证据、历史根因和整改措施。</p>
+          </div>
+          <a class="source-link" href="/sources/historical_8d_kb.md" target="_blank" rel="noopener">查看案例库 <span aria-hidden="true">↗</span></a>
+        </div>
+        <div id="case-list"></div>
+      </section>
+
+      <footer class="report-footer flex flex-wrap items-start justify-between gap-3">
+        <p id="comparison-range"></p>
+        <p>占比以差评样本为分母。根因需结合实物和检验记录确认。</p>
+      </footer>
+    </div>
+  </main>
+
+  <dialog id="preview-dialog" aria-labelledby="dialog-heading">
+    <div class="dialog-heading flex items-start justify-between gap-4">
+      <div>
+        <h2 id="dialog-heading">飞书告警卡片预览</h2>
+        <p>本地模拟</p>
+      </div>
+      <form method="dialog"><button class="close-button" aria-label="关闭预览" autofocus>×</button></form>
+    </div>
+    <p id="preview-status" class="preview-status" role="status"></p>
+    <div id="preview-content" hidden>
+      <section class="message-card" aria-label="模拟消息卡片">
+        <div class="message-header" id="message-header">
+          <h3 id="message-title"></h3>
+          <p id="message-subtitle"></p>
+        </div>
+        <div id="message-body"></div>
+      </section>
+      <details class="payload">
+        <summary>查看卡片 JSON</summary>
+        <pre id="message-json"></pre>
+      </details>
+    </div>
+  </dialog>
+
+  <template id="signal-template">
+    <a class="signal-link">
+      <div class="signal-title flex flex-wrap items-center gap-2.5">
+        <span data-field="level" class="signal-level"></span>
+        <h3 data-field="title"></h3>
+      </div>
+      <p data-field="group" class="signal-group"></p>
+      <div class="signal-metrics flex flex-wrap items-baseline gap-x-2.5 gap-y-1 tabular-nums">
+        <strong data-field="share"></strong>
+        <span data-field="comparison"></span>
+      </div>
+    </a>
+  </template>
+
+  <template id="case-template">
+    <details class="case-card">
+      <summary class="case-summary">
+        <span class="case-indicator" aria-hidden="true"></span>
+        <span class="case-label min-w-0">
+          <span data-field="title"></span>
+          <span data-field="group"></span>
+        </span>
+        <span class="expand-label" aria-hidden="true"></span>
+        <span class="chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="case-layout grid gap-5">
+        <div class="min-w-0">
+          <h4>当期预警证据</h4>
+          <dl class="evidence-metrics">
+            <div><dt>近 7 天</dt><dd data-field="recent"></dd></div>
+            <div><dt>历史基线</dt><dd data-field="baseline"></dd></div>
+            <div><dt>差评占比增幅</dt><dd data-field="change"></dd></div>
+            <div><dt>命中批次</dt><dd data-field="lots"></dd></div>
+          </dl>
+          <p class="keywords" data-field="keywords"></p>
+          <ul class="review-list" data-field="evidence" aria-label="差评原文摘录"></ul>
+        </div>
+        <div class="historical-case min-w-0">
+          <div data-field="matched-case">
+            <h4 data-field="case-title"></h4>
+            <p data-field="case-meta" class="case-meta"></p>
+            <dl class="case-stages">
+              <div><dt>D4 根因分析</dt><dd data-field="cause"></dd></div>
+              <div><dt>D5 永久措施</dt><dd data-field="action"></dd></div>
+              <div><dt>D6 验证结果</dt><dd data-field="verification"></dd></div>
+            </dl>
+            <p data-field="matched-keywords" class="keywords"></p>
+          </div>
+          <p data-field="no-match" hidden>历史案例库中暂未找到相似记录。请按当前批次和评论证据开展排查。</p>
+        </div>
+      </div>
+    </details>
+  </template>
+</body>
+</html>
